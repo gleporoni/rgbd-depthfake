@@ -1,0 +1,4 @@
+# @package _group_
+backbone: ["resnet50","mobilenet_v2","inception_v3","efficientnet_b2","shufflenet_v2_x1_0","vit_h_14"]
+
+learning_rate: 1e-3

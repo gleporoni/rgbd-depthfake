@@ -3,9 +3,6 @@
 # reproducibility
 seed: 42
 
-# model name
-model_name: default_name  # used to name the directory in which model's checkpoints will be stored (experiments/model_name/...)
-
 # pl_trainer
 pl_trainer:
   _target_: pytorch_lightning.Trainer
@@ -34,4 +31,4 @@ model_checkpoint_callback:
   mode: min
   verbose: True
   save_top_k: 5
-  dirpath: experiments/${train.model_name}
+  dirpath: experiments/${model.model_name}

@@ -1,9 +1,13 @@
-rgb_path: "/media/luca/2TB Hard Disk/zanchetta/depthfake/RGB-Frames"
-depth_path: "/media/luca/2TB Hard Disk/zanchetta/depthfake/RGB-Frames"
+dataset_name: "faceforensics"
+
+rgb_path: "dataset/Faceforensics/RGB-Faces"
+depth_path: "dataset/Faceforensics/RGB-Faces"
 
 compression_level: ['raw'] # ['raw', 'c24', 'c40']
 real: ["actors", "youtube"]
 attacks: ["Deepfakes", "Face2Face", "FaceShifter", "FaceSwap", "NeuralTextures"]
+use_attacks: True
+use_depth: True
 
 batch_size: 1
 num_workers: 1

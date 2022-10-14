@@ -13,7 +13,7 @@ from model.rgb import RGB
 def train(conf: omegaconf.DictConfig, model_name: str) -> None:
 
     # reproducibility
-    pl.seed_everything(conf.train.seed)
+    pl.seed_everything(conf.run.seed)
 
     # data module declaration
     pl_data_module = FaceForensicsPlusPlus(conf)
@@ -24,16 +24,20 @@ def train(conf: omegaconf.DictConfig, model_name: str) -> None:
     # callbacks declaration
     callbacks_store = []
 
-    # if conf.train.early_stopping_callback is not None:
-    #     early_stopping_callback: EarlyStopping = hydra.utils.instantiate(conf.train.early_stopping_callback)
+    # if conf.run.early_stopping_callback is not None:
+    #     early_stopping_callback: EarlyStopping = hydra.utils.instantiate(conf.run.early_stopping_callback)
     #     callbacks_store.append(early_stopping_callback)
 
-    if conf.train.model_checkpoint_callback is not None:
-        model_checkpoint_callback: ModelCheckpoint = hydra.utils.instantiate(conf.train.model_checkpoint_callback)
+    if conf.run.model_checkpoint_callback is not None:
+        model_checkpoint_callback: ModelCheckpoint = hydra.utils.instantiate(
+            conf.run.model_checkpoint_callback
+        )
         callbacks_store.append(model_checkpoint_callback)
 
     # trainer
-    trainer: Trainer = hydra.utils.instantiate(conf.train.pl_trainer, callbacks=callbacks_store)
+    trainer: Trainer = hydra.utils.instantiate(
+        conf.run.pl_trainer, callbacks=callbacks_store
+    )
 
     # module fit
     trainer.fit(pl_module, datamodule=pl_data_module)

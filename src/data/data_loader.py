@@ -13,10 +13,12 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
     def __init__(self, conf: DictConfig):
         super().__init__()
         self.conf = conf
-        self.transform = transforms.Compose([
-            transforms.ToTensor(), 
-            transforms.Normalize(mean=self.conf.data.mean, std=self.conf.data.std)
-        ])
+        self.transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(mean=self.conf.data.mean, std=self.conf.data.std),
+            ]
+        )
         self.batch_size = self.conf.data.batch_size
 
     # def prepare_data(self, *args, **kwargs):
@@ -24,10 +26,16 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if stage in (None, "fit"):
-            self.train_data = FaceForensics(conf=self.conf, split="train", transform=self.transform)
-            self.val_data = FaceForensics(conf=self.conf, split="val", transform=self.transform)
+            self.train_data = FaceForensics(
+                conf=self.conf, split="train", transform=self.transform
+            )
+            self.val_data = FaceForensics(
+                conf=self.conf, split="val", transform=self.transform
+            )
         else:
-            self.test_data = FaceForensics(conf=self.conf, split="test", transform=self.transform)
+            self.test_data = FaceForensics(
+                conf=self.conf, split="test", transform=self.transform
+            )
 
     def train_dataloader(self, *args, **kwargs) -> DataLoader:
         return DataLoader(

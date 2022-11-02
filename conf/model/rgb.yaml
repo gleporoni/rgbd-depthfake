@@ -1,6 +1,6 @@
-# @package _group_
 model_name: "rgb"
 
-backbone: ["resnet50","mobilenet_v2","inception_v3","efficientnet_b2","shufflenet_v2_x1_0","vit_h_14"]
+backbone: "vit_base_patch16_224" # ["resnet50","mobilenet_v2","efficientnet_b2","shufflenet_v2_x1_0","vit_base_patch16_224", "xception"]
 
-learning_rate: 1e-3
+learning_rate: 1e-4
+

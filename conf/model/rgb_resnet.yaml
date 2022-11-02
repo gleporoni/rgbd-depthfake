@@ -1,0 +1,6 @@
+model_name: "rgb_resnet"
+
+backbone: "resnet50"
+
+learning_rate: 1e-4
+

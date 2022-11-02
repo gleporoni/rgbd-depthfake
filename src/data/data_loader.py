@@ -1,6 +1,7 @@
 from typing import Any, Union, List, Optional
 
 from omegaconf import DictConfig
+import logging
 
 import torch
 import torchvision.transforms as transforms
@@ -54,7 +55,7 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             num_workers=self.conf.data.num_workers,
             pin_memory=True,
             persistent_workers=True,
-            shuffle=True,
+            shuffle=False,
         )
 
     def test_dataloader(self, *args, **kwargs) -> Union[DataLoader, List[DataLoader]]:
@@ -64,5 +65,5 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             num_workers=self.conf.data.num_workers,
             pin_memory=True,
             persistent_workers=True,
-            shuffle=True,
+            shuffle=False,
         )

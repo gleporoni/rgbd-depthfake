@@ -46,4 +46,5 @@ __pypackages__/
 
 # Datasets and experiments
 experiments/
+multirun/
 dataset/

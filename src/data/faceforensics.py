@@ -42,9 +42,10 @@ class FaceForensics(Dataset):
         self.compression_level = self.conf.data.compression_level
         self.real = self.conf.data.real
         self.attacks = self.conf.data.attacks
+        self.use_depth = self.conf.data.use_depth
 
         self.dataset = self._load_data(
-            use_attacks=self.conf.data.use_attacks, use_depth=self.conf.data.use_depth
+            use_attacks=self.conf.data.use_attacks, use_depth=self.use_depth
         )
 
         # Check if the dataset is well constructed before training
@@ -69,7 +70,11 @@ class FaceForensics(Dataset):
         """
         # Load the image and apply transformations
         image = Image.open(self.dataset.images[idx]).convert("RGB")
-        #depth = Image.fromarray(self.dataset.depths[idx].astype("uint8"), "RGB")
+        
+        # Load depth
+        if self.use_depth:
+            depth = np.load(self.dataset.depths[idx], allow_pickle=True)
+            image = torch.cat((image, depth), -1)
 
         if self.transform:
             image = self.transform(image)
@@ -77,7 +82,6 @@ class FaceForensics(Dataset):
         
         return {
             "image": image,
-            #"depth": depth,
             "label": label,
         }
 
@@ -135,7 +139,7 @@ class FaceForensics(Dataset):
                     else:
                         for _ in range(len(list_of_images)):
                             depths.append(None)
-
+        
         dataset = pd.DataFrame(
             data={
                 "images": images,
@@ -165,7 +169,7 @@ class FaceForensics(Dataset):
         depths = [
             path
             for path in Path(self.depth_path, label, compression, source).glob(
-                "*/*.jpg"
+                "*/*.npy"
             )
         ]
 

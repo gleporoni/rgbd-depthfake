@@ -1,13 +1,13 @@
 dataset_name: "faceforensics"
 
 rgb_path: "dataset/Faceforensics/RGB-Faces"
-depth_path: "dataset/Faceforensics/RGB-Faces"
+depth_path: "dataset/Faceforensics/Depth-Faces"
 
-compression_level: ['raw', 'c24', 'c40']
+compression_level: ['c40']
 real: ["youtube"]
-attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
+attacks: ["Deepfakes"]
 use_attacks: true
-use_depth: false
+use_depth: true
 
 batch_size: 128
 num_workers: 6

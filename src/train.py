@@ -6,7 +6,7 @@ import logging
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
 
 from data.data_loader import FaceForensicsPlusPlus
@@ -20,13 +20,15 @@ def train(conf: omegaconf.DictConfig) -> None:
     # reproducibility
     pl.seed_everything(conf.run.seed)
 
-    # logger
+    # loggers
+    csv_logger = CSVLogger("logs", name=f"{conf.model.model_name}_{conf.data.compression_level[0]}")
     wandb_logger = (
-        WandbLogger(project=conf.project)
+        WandbLogger(project=conf.project, name=f"{conf.model.model_name}_{conf.data.compression_level[0]}")
         if "fast_dev_run" not in conf.run.pl_trainer
         and "overfit_batches" not in conf.run.pl_trainer  # i.e. if not developing
         else True
     )
+    loggers = [csv_logger]
 
     # data module declaration
     data = FaceForensicsPlusPlus(conf)
@@ -36,6 +38,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     model = RGB(conf)
     # log gradients and model topology
     if wandb_logger is not None and type(wandb_logger) is not bool:
+        loggers.append(wandb_logger)
         wandb_logger.watch(model)
 
 
@@ -50,7 +53,7 @@ def train(conf: omegaconf.DictConfig) -> None:
 
     # trainer
     trainer: Trainer = hydra.utils.instantiate(
-        conf.run.pl_trainer, callbacks=callbacks_store, logger=wandb_logger
+        conf.run.pl_trainer, callbacks=callbacks_store, logger=loggers
     )
 
     # module fit

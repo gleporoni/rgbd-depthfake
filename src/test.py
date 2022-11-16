@@ -13,6 +13,7 @@ from model.rgb import RGB
 
 log = logging.getLogger(__name__)
 
+
 def train(conf: omegaconf.DictConfig) -> None:
 
     # reproducibility
@@ -25,9 +26,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     model = RGB(conf)
 
     # trainer
-    trainer: Trainer = hydra.utils.instantiate(
-        conf.run.pl_trainer
-    )
+    trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
 
     # Load a pretrained model from a checkpoint
     base_path = Path(Path(__file__).parent, "../")
@@ -35,14 +34,10 @@ def train(conf: omegaconf.DictConfig) -> None:
         base_path,
         conf.run.experiment.checkpoint_file,
     )
-    model.load_from_checkpoint(
-        checkpoint_path=checkpoint_path
-    )
+    model.load_from_checkpoint(checkpoint_path=checkpoint_path)
 
     # module test
     trainer.test(model, datamodule=data)
-
-    
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

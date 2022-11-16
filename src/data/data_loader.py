@@ -14,12 +14,16 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
     def __init__(self, conf: DictConfig):
         super().__init__()
         self.conf = conf
-        self.transform = transforms.Compose(
-            [
+
+        transform = (
+            [transforms.ToTensor()]
+            if self.conf.data.use_depth
+            else [
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.conf.data.mean, std=self.conf.data.std),
             ]
         )
+        self.transform = transforms.Compose(transform)
         self.batch_size = self.conf.data.batch_size
 
     # def prepare_data(self, *args, **kwargs):

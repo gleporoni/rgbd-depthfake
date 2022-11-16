@@ -14,24 +14,34 @@ class RGB(pl.LightningModule):
         super().__init__()
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
-        
+
         if self.conf.model.backbone == "resnet50":
             # init a pretrained resnet
-            self.model = timm.create_model('resnet50', pretrained=True, num_classes=self.num_classes)
+            self.model = timm.create_model(
+                "resnet50", pretrained=True, num_classes=self.num_classes
+            )
         elif self.conf.model.backbone == "mobilenet_v2":
-            self.model = timm.create_model('mobilenetv2_100', pretrained=True, num_classes=self.num_classes)
+            self.model = timm.create_model(
+                "mobilenetv2_100", pretrained=True, num_classes=self.num_classes
+            )
         elif self.conf.model.backbone == "efficientnet_b2":
-            self.model = timm.create_model('efficientnet_b2', pretrained=True, num_classes=self.num_classes)
+            self.model = timm.create_model(
+                "efficientnet_b2", pretrained=True, num_classes=self.num_classes
+            )
         elif self.conf.model.backbone == "shufflenet_v2_x1_0":
             self.model = models.shufflenet_v2_x1_0(pretrained=True)
             num_filters = self.model.fc.in_features
-            
+
             # add a new classifier
             self.model.fc = torch.nn.Linear(num_filters, self.num_classes)
         elif self.conf.model.backbone == "xception":
-            self.model = timm.create_model('xception', pretrained=True, num_classes=self.num_classes)
+            self.model = timm.create_model(
+                "xception", pretrained=True, num_classes=self.num_classes
+            )
         elif self.conf.model.backbone == "vit_base_patch16_224":
-            self.model = timm.create_model('vit_base_patch16_224', pretrained=True, num_classes=self.num_classes)
+            self.model = timm.create_model(
+                "vit_base_patch16_224", pretrained=True, num_classes=self.num_classes
+            )
 
         else:
             raise NotImplementedError
@@ -39,7 +49,7 @@ class RGB(pl.LightningModule):
         self.train_accuracy = torchmetrics.Accuracy()
         self.val_accuracy = torchmetrics.Accuracy()
         self.test_accuracy = torchmetrics.Accuracy()
-        
+
         self.save_hyperparameters(conf)
 
     def forward(self, x) -> dict:
@@ -81,10 +91,6 @@ class RGB(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.conf.model.learning_rate)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
-        
-        return {
-            'optimizer': optimizer,
-            'scheduler': scheduler,
-            'monitor': 'val_loss'
-        }
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
+
+        return {"optimizer": optimizer, "scheduler": scheduler, "monitor": "val_loss"}

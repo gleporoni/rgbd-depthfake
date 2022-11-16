@@ -5,8 +5,8 @@ hydra:
 
 defaults:
   - _self_
-  - run: train
-  - model: rgb_xception
-  - data: faceforensicsplusplus
+  - run: dev
+  - model: depth_resnet
+  - data: faceforensicsplusplus_c40
 
 project: 'depthfake'

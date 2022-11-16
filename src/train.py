@@ -11,9 +11,11 @@ from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
 from data.data_loader import FaceForensicsPlusPlus
 from model.rgb import RGB
+from model.depthfake import DepthFake
 
 
 log = logging.getLogger(__name__)
+
 
 def train(conf: omegaconf.DictConfig) -> None:
 
@@ -21,9 +23,14 @@ def train(conf: omegaconf.DictConfig) -> None:
     pl.seed_everything(conf.run.seed)
 
     # loggers
-    csv_logger = CSVLogger("logs", name=f"{conf.model.model_name}_{conf.data.compression_level[0]}")
+    csv_logger = CSVLogger(
+        "logs", name=f"{conf.model.model_name}_{conf.data.compression_level[0]}"
+    )
     wandb_logger = (
-        WandbLogger(project=conf.project, name=f"{conf.model.model_name}_{conf.data.compression_level[0]}")
+        WandbLogger(
+            project=conf.project,
+            name=f"{conf.model.model_name}_{conf.data.compression_level[0]}",
+        )
         if "fast_dev_run" not in conf.run.pl_trainer
         and "overfit_batches" not in conf.run.pl_trainer  # i.e. if not developing
         else True
@@ -35,12 +42,30 @@ def train(conf: omegaconf.DictConfig) -> None:
     data.setup(stage="fit")
 
     # main module declaration
-    model = RGB(conf)
+    if conf.model.model_name in (
+        "rgb_efficientnet",
+        "rgb_mobilenet",
+        "rgb_resnet",
+        "rgb_shufflenet",
+        "rgb_vit",
+        "rgb_xception",
+    ):
+        model = RGB(conf)
+    elif conf.model.model_name in (
+        "depth_efficientnet",
+        "depth_mobilenet",
+        "depth_resnet",
+        "depth_shufflenet",
+        "depth_vit",
+        "depth_xception",
+    ):
+        model = DepthFake(conf)
+    else:
+        raise NotImplementedError
     # log gradients and model topology
     if wandb_logger is not None and type(wandb_logger) is not bool:
         loggers.append(wandb_logger)
         wandb_logger.watch(model)
-
 
     # callbacks declaration
     callbacks_store = []

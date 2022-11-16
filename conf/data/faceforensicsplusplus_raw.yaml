@@ -9,7 +9,7 @@ attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
 use_attacks: true
 use_depth: false
 
-batch_size: 128
+batch_size: 32
 num_workers: 6
 
 mean: [0.485,0.456,0.406]

@@ -3,4 +3,4 @@ model_name: "depth_shufflenet"
 backbone: "shufflenet_v2_x1_0"
 
 learning_rate: 1e-4
-
+weight_decay: 1e-5

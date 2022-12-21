@@ -25,9 +25,11 @@ class DepthFake(pl.LightningModule):
             kernel_size = tuple(self.model.conv1.kernel_size)
             stride = tuple(self.model.conv1.stride)
             out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(4, out_features, kernel_size=kernel_size, stride=stride)
+            new_features = torch.nn.Conv2d(
+                4, out_features, kernel_size=kernel_size, stride=stride
+            )
             # For Depth-channel weight should randomly initialized with Gaussian
-            new_features.weight.data.normal_(0, 0.001)
+            torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
             new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -41,9 +43,11 @@ class DepthFake(pl.LightningModule):
             kernel_size = tuple(self.model.conv_stem.kernel_size)
             stride = tuple(self.model.conv_stem.stride)
             out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(4, out_features, kernel_size=kernel_size, stride=stride)
+            new_features = torch.nn.Conv2d(
+                4, out_features, kernel_size=kernel_size, stride=stride
+            )
             # For Depth-channel weight should randomly initialized with Gaussian
-            new_features.weight.data.normal_(0, 0.001)
+            torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
             new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -57,9 +61,11 @@ class DepthFake(pl.LightningModule):
             kernel_size = tuple(self.model.conv_stem.kernel_size)
             stride = tuple(self.model.conv_stem.stride)
             out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(4, out_features, kernel_size=kernel_size, stride=stride)
+            new_features = torch.nn.Conv2d(
+                4, out_features, kernel_size=kernel_size, stride=stride
+            )
             # For Depth-channel weight should randomly initialized with Gaussian
-            new_features.weight.data.normal_(0, 0.001)
+            torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
             new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -76,9 +82,11 @@ class DepthFake(pl.LightningModule):
             kernel_size = tuple(self.model.conv1[0].kernel_size)
             stride = tuple(self.model.conv1[0].stride)
             out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(4, out_features, kernel_size=kernel_size, stride=stride)
+            new_features = torch.nn.Conv2d(
+                4, out_features, kernel_size=kernel_size, stride=stride
+            )
             # For Depth-channel weight should randomly initialized with Gaussian
-            new_features.weight.data.normal_(0, 0.001)
+            torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
             new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -92,9 +100,11 @@ class DepthFake(pl.LightningModule):
             kernel_size = tuple(self.model.conv1.kernel_size)
             stride = tuple(self.model.conv1.stride)
             out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(4, out_features, kernel_size=kernel_size, stride=stride)
+            new_features = torch.nn.Conv2d(
+                4, out_features, kernel_size=kernel_size, stride=stride
+            )
             # For Depth-channel weight should randomly initialized with Gaussian
-            new_features.weight.data.normal_(0, 0.001)
+            torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
             new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -108,9 +118,11 @@ class DepthFake(pl.LightningModule):
             kernel_size = tuple(self.model.patch_embed.proj.kernel_size)
             stride = tuple(self.model.patch_embed.proj.stride)
             out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(4, out_features, kernel_size=kernel_size, stride=stride)
+            new_features = torch.nn.Conv2d(
+                4, out_features, kernel_size=kernel_size, stride=stride
+            )
             # For Depth-channel weight should randomly initialized with Gaussian
-            new_features.weight.data.normal_(0, 0.001)
+            torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
             new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -162,9 +174,17 @@ class DepthFake(pl.LightningModule):
         self.log("test_accuracy", self.test_accuracy, on_epoch=True)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.conf.model.learning_rate)
+        optimizer = optim.Adam(
+            self.parameters(),
+            lr=self.conf.model.learning_rate,
+            weight_decay=self.conf.model.weight_decay,
+        )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
 
-        return {"optimizer": optimizer, "scheduler": scheduler, "monitor": "val_loss"}
-
-    
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+            },
+        }

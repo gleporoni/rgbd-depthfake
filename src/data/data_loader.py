@@ -26,9 +26,6 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
         self.transform = transforms.Compose(transform)
         self.batch_size = self.conf.data.batch_size
 
-    # def prepare_data(self, *args, **kwargs):
-    #     raise NotImplementedError
-
     def setup(self, stage: Optional[str] = None):
         if stage in (None, "fit"):
             self.train_data = FaceForensics(

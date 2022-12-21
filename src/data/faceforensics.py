@@ -1,11 +1,7 @@
-import csv
-import torch
 import numpy as np
 import pandas as pd
-import glob
 import logging
-
-from random import randrange
+from tqdm import tqdm
 
 from typing import Any, Tuple
 from pathlib import Path
@@ -13,6 +9,312 @@ from omegaconf import DictConfig
 from PIL import Image
 
 from torch.utils.data import Dataset
+
+logger = logging.getLogger(__name__)
+
+
+class FaceForensics(Dataset):
+    """
+    Dataset loader for T4SA dataset.
+    """
+
+    def __init__(
+        self,
+        conf: DictConfig,
+        split: str,
+        transform: Any = None,
+    ):
+        self.conf = conf
+        self.split = split
+        self.num_classes = self.conf.data.num_classes
+
+        # Data dirs
+        self.base_path = Path(Path(__file__).parent, "../../")
+        self.rgb_path = Path(self.base_path, self.conf.data.rgb_path)
+        self.depth_path = Path(self.base_path, self.conf.data.depth_path)
+
+        # Dataset info
+        self.compression_level = self.conf.data.compression_level
+        self.real = self.conf.data.real
+        self.attacks = self.conf.data.attacks
+        self.use_depth = self.conf.data.use_depth
+
+        # Val and test data
+        self.val_videos = VAL_VIDEOS
+        self.test_videos = TEST_VIDEOS
+
+        self.dataset = self._load_data(
+            use_attacks=self.conf.data.use_attacks, use_depth=self.use_depth
+        )
+
+        # Convert string labels to categoricals
+        self._to_categorical()
+
+        # Split the dataset
+        self._data_split()
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        """
+        This function returns a tuple that is further passed to collate_fn
+        """
+        # Load the image and apply transformations
+        image = Image.open(self.dataset.images[idx]).convert("RGB")
+
+        # Load depth
+        if self.use_depth:
+            depth = np.load(self.dataset.depths[idx], allow_pickle=True)
+            image = np.array(image)
+            image = np.stack(
+                (image[:, :, 0], image[:, :, 1], image[:, :, 2], depth), axis=-1
+            )
+
+        if self.transform:
+            image = self.transform(image)
+        label = self.dataset.classes[idx]
+
+        return {
+            "image": image,
+            "label": label,
+        }
+
+    def _load_data(
+        self, use_depth: bool = False, use_attacks: list = False
+    ) -> pd.DataFrame:
+        """
+        Load the RGB images.
+        """
+        images = []
+        depths = []
+        labels = []
+
+        # Loop over compression levels
+        for compression in self.compression_level:
+            # Loop over real videos
+            logger.info("Loading real videos")
+            for real in self.real:
+                if use_depth:
+                    # Add depths
+                    list_of_depths = self._load_depth(
+                        compression=compression, label="Real", source=real
+                    )
+
+                    # Add RGB images
+                    list_of_images = self._load_rgb_from_depth(
+                        compression=compression,
+                        depths=list_of_depths,
+                        label="Real",
+                        class_id=real,
+                    )
+                    list_of_images, list_of_depths = self._validate_depths(
+                        list_of_images
+                    )
+
+                    # Add labels
+                    list_of_labels = self._load_labels(list_of_images, real)
+
+                    images += list_of_images
+                    depths += list_of_depths
+                    labels += list_of_labels
+                else:
+                    # Add RGB images
+                    list_of_images = self._load_rgb(
+                        compression, label="Real", class_id=real
+                    )
+                    images += list_of_images
+
+                    # Add depths
+                    for _ in range(len(list_of_images)):
+                        depths.append(None)
+
+                    # Add labels
+                    list_of_labels = self._load_labels(list_of_images, real)
+                    labels += list_of_labels
+
+            if use_attacks:
+                # Loop over the attacks
+                logger.info("Loading fake videos")
+                for attack in self.attacks:
+                    if use_depth:
+                        # Add depths
+                        list_of_depths = self._load_depth(
+                            compression=compression, label="Fake", source=attack
+                        )
+
+                        # Add RGB images
+                        list_of_images = self._load_rgb_from_depth(
+                            compression=compression,
+                            depths=list_of_depths,
+                            label="Fake",
+                            class_id=attack,
+                        )
+                        list_of_images, list_of_depths = self._validate_depths(
+                            list_of_images
+                        )
+
+                        # Add labels
+                        list_of_labels = self._load_labels(list_of_images, attack)
+
+                        images += list_of_images
+                        depths += list_of_depths
+                        labels += list_of_labels
+                    else:
+                        # Add RGB images
+                        list_of_images = self._load_rgb(
+                            compression, label="Fake", class_id=attack
+                        )
+                        images += list_of_images
+
+                        # Add depths
+                        for _ in range(len(list_of_images)):
+                            depths.append(None)
+
+                        # Add labels
+                        list_of_labels = self._load_labels(list_of_images, attack)
+
+                        labels += list_of_labels
+
+        dataset = pd.DataFrame(
+            data={
+                "images": images,
+                "depths": depths,
+                "labels": labels,
+            }
+        )
+
+        # if self.use_depth:
+        #     logger.info(f"Checking the depths")
+        #     errors_file = Path("remove.txt")
+        #     for _, row in tqdm(dataset.iterrows(), total=len(dataset)):
+        #         # Load the image and apply transformations
+        #         image = Image.open(row.images).convert("RGB")
+
+        #         try:
+        #             # Load depth
+        #             if self.use_depth:
+        #                 depth = np.load(row.depths, allow_pickle=True)
+        #                 image = np.array(image)
+        #                 image = np.stack(
+        #                     (image[:, :, 0], image[:, :, 1], image[:, :, 2], depth), axis=-1
+        #                 )
+        #         except:
+        #             with open(errors_file, "a") as f:
+        #                 logger.info(f"Error: {row.depths}")
+        #                 f.write(f"{str(row.depths)}\n")
+        #     logger.info(f"Checking completed")
+
+        return dataset
+
+    def _load_rgb(self, compression, label, class_id):
+        images = [
+            path
+            for path in Path(self.rgb_path, label, compression, class_id).glob(
+                "*/*.jpg"
+            )
+        ]
+
+        return images
+
+    def _load_labels(self, images, class_id):
+        labels = [class_id for _ in range(len(images))]
+
+        return labels
+
+    def _load_depth(self, label: str, compression: str, source: str) -> list:
+        assert (
+            label in ("Real", "Fake")
+            and source
+            in (
+                "actors",
+                "youtube",
+                "Deepfakes",
+                "Face2Face",
+                "FaceShifter",
+                "FaceSwap",
+                "NeuralTextures",
+            )
+            and compression in ("raw", "c23", "c40")
+        )
+
+        depths = [
+            path
+            for path in Path(self.depth_path, label, compression, source).glob(
+                "*/*.npy"
+            )
+        ]
+
+        return depths
+
+    def _load_rgb_from_depth(self, compression, depths, label, class_id):
+        depth_images = []
+        for depth in depths:
+            rgb_path = str(depth).replace(
+                self.conf.data.depth_path, self.conf.data.rgb_path
+            )
+            rgb_path = rgb_path.replace("_d.npy", ".jpg")
+            depth_images.append(Path(rgb_path))
+
+        # Remove paths if they do not exist
+        rgb_images = self._load_rgb(compression, label=label, class_id=class_id)
+        images_to_remove = set(depth_images) - set(rgb_images)
+        images = list(set(depth_images) - images_to_remove)
+
+        return images
+
+    def _validate_depths(self, images):
+        """
+        Removes the paths that do not exist in the dataset.
+        """
+        # Remove depths that do not have a correspondance with a rgb path
+        new_depths = []
+        for image in images:
+            depth_path = str(image).replace(
+                self.conf.data.rgb_path, self.conf.data.depth_path
+            )
+            depth_path = depth_path.replace(".jpg", "_d.npy")
+            new_depths.append(Path(depth_path))
+
+        return images, new_depths
+
+    def _to_categorical(self):
+        """
+        Converts strings labels to integers.
+        """
+        classes = []
+        for label in self.dataset.labels:
+            if label in self.conf.data.real:
+                classes.append(0)
+            else:
+                if self.num_classes == 2:
+                    classes.append(1)
+                else:
+                    classes.append(list(self.conf.data.attacks).index(label) + 1)
+
+        self.dataset["classes"] = classes
+
+    def _data_split(self):
+        """
+        Splits the dataset according to the actual split.
+        """
+        split = []
+        for _, row in self.dataset.iterrows():
+            video = str(row.images.parent).split("/")[-1].split("_")[0]
+            if video in self.val_videos:
+                split.append("val")
+            elif video in self.test_videos:
+                split.append("test")
+            else:
+                split.append("train")
+        self.dataset["split"] = split
+
+        self.dataset = self.dataset.loc[
+            self.dataset["split"] == self.split
+        ].reset_index()
+
 
 VAL_VIDEOS = [
     "720",
@@ -298,232 +600,3 @@ TEST_VIDEOS = [
     "429",
     "404",
 ]
-
-
-class FaceForensics(Dataset):
-    """
-    Dataset loader for T4SA dataset.
-    """
-
-    def __init__(
-        self,
-        conf: DictConfig,
-        split: str,
-        transform: Any = None,
-    ):
-        self.conf = conf
-        self.split = split
-        self.num_classes = self.conf.data.num_classes
-
-        # Data dirs
-        self.base_path = Path(Path(__file__).parent, "../../")
-        self.rgb_path = Path(self.base_path, self.conf.data.rgb_path)
-        self.depth_path = Path(self.base_path, self.conf.data.depth_path)
-
-        # Dataset info
-        self.compression_level = self.conf.data.compression_level
-        self.real = self.conf.data.real
-        self.attacks = self.conf.data.attacks
-        self.use_depth = self.conf.data.use_depth
-
-        self.dataset = self._load_data(
-            use_attacks=self.conf.data.use_attacks, use_depth=self.use_depth
-        )
-
-        # Check if the dataset is well constructed before training
-        if self.dataset.depths[0] is not None:
-            self._data_sanity_check(self.dataset)
-
-        # Convert string labels to categoricals
-        self._to_categorical()
-
-        # Split the dataset
-        self._data_split()
-
-        self.transform = transform
-        self.log = logging.getLogger(__name__)
-
-    def __len__(self):
-        return len(self.dataset)
-
-    def __getitem__(self, idx):
-        """
-        This function returns a tuple that is further passed to collate_fn
-        """
-        # Load the image and apply transformations
-        image = Image.open(self.dataset.images[idx]).convert("RGB")
-
-        # Load depth
-        if self.use_depth:
-            depth = np.load(self.dataset.depths[idx], allow_pickle=True)
-            image = np.array(image)
-            image = np.stack((image[:,:,0],image[:,:,1],image[:,:,2], depth), axis=-1)
-
-        if self.transform:
-            image = self.transform(image)
-        label = self.dataset.classes[idx]
-
-        return {
-            "image": image,
-            "label": label,
-        }
-
-    def _load_data(
-        self, use_depth: bool = False, use_attacks: list = False
-    ) -> pd.DataFrame:
-        """
-        Load the RGB images.
-        """
-        images = []
-        depths = []
-        labels = []
-
-        # Loop over compression levels
-        for compression in self.compression_level:
-            # Loop over real videos
-            for r in self.real:
-                list_of_images = [
-                    path
-                    for path in Path(self.rgb_path, "Real", compression, r).glob(
-                        "*/*.jpg"
-                    )
-                ]
-                images += list_of_images
-
-                list_of_labels = [r for _ in range(len(list_of_images))]
-                labels += list_of_labels
-
-                if use_depth:
-                    depths += self._load_depth(
-                        compression=compression, label="Real", source=r
-                    )
-                else:
-                    for _ in range(len(list_of_images)):
-                        depths.append(None)
-
-            if use_attacks:
-                # Loop over the attacks
-                for a in self.attacks:
-                    list_of_images = [
-                        path
-                        for path in Path(self.rgb_path, "Fake", compression, a).glob(
-                            "*/*.jpg"
-                        )
-                    ]
-                    images += list_of_images
-
-                    list_of_labels = [a for _ in range(len(list_of_images))]
-                    labels += list_of_labels
-
-                    if use_depth:
-                        depths += self._load_depth(
-                            compression=compression, label="Fake", source=a
-                        )
-                    else:
-                        for _ in range(len(list_of_images)):
-                            depths.append(None)
-
-        if self.use_depth:
-            # Remove some images if have missing depth
-            images_clean = []
-            labels_clean = []
-            depths_clean = []
-            for img in images:
-                query = Path(str(img).replace("RGB", "Depth").replace(".jpg", "_d.npy"))
-                if query in depths:
-                    idx = images.index(img)
-                    images_clean.append(images[idx])
-                    labels_clean.append(labels[idx])
-                    depths_clean.append(query)
-            images = images_clean
-            labels = labels_clean
-            depths = depths_clean
-
-        dataset = pd.DataFrame(
-            data={
-                "images": images,
-                "depths": depths,
-                "labels": labels,
-            }
-        )
-
-        return dataset
-
-    def _load_depth(self, label: str, compression: str, source: str) -> list:
-        assert (
-            label in ("Real", "Fake")
-            and source
-            in (
-                "actors",
-                "youtube",
-                "Deepfakes",
-                "Face2Face",
-                "FaceShifter",
-                "FaceSwap",
-                "NeuralTextures",
-            )
-            and compression in ("raw", "c24", "c40")
-        )
-
-        depths = [
-            path
-            for path in Path(self.depth_path, label, compression, source).glob(
-                "*/*.npy"
-            )
-        ]
-
-        return depths
-
-    def _data_sanity_check(self, dataset: pd.DataFrame) -> None:
-        """
-        Check if the dataset is well constructed.
-        """
-        for _, row in dataset.iterrows():
-            if (
-                row.images.match(
-                    str(
-                        Path(
-                            "*",
-                            row.depths.parent.name,
-                            row.depths.name.replace("_d.npy", ".jpg"),
-                        )
-                    )
-                )
-                == False
-            ):
-                raise ValueError(f"Non matching inputs:\n{row.images} and {row.depths}")
-
-    def _to_categorical(self):
-        """
-        Converts strings labels to integers.
-        """
-        classes = []
-        for label in self.dataset.labels:
-            if label in self.conf.data.real:
-                classes.append(0)
-            else:
-                if self.num_classes == 2:
-                    classes.append(1)
-                else:
-                    classes.append(list(self.conf.data.attacks).index(label) + 1)
-
-        self.dataset["classes"] = classes
-
-    def _data_split(self):
-        """
-        Splits the dataset according to the actual split.
-        """
-        split = []
-        for _, row in self.dataset.iterrows():
-            video = str(row.images.parent).split("/")[-1].split("_")[0]
-            if video in VAL_VIDEOS:
-                split.append("val")
-            elif video in TEST_VIDEOS:
-                split.append("test")
-            else:
-                split.append("train")
-        self.dataset["split"] = split
-
-        self.dataset = self.dataset.loc[
-            self.dataset["split"] == self.split
-        ].reset_index()

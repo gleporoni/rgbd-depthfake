@@ -93,4 +93,10 @@ class RGB(pl.LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=self.conf.model.learning_rate)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
 
-        return {"optimizer": optimizer, "scheduler": scheduler, "monitor": "val_loss"}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+            },
+        }

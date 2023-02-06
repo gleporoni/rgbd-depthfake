@@ -7,7 +7,9 @@ Instruction to run the code:
 ./run.sh
 ```
 
-2. Run the ```train``` or ```test```.
+2. Edit the ```config``` files accordingly to the experiment you want to execution. 
+
+3. Run the ```train``` or ```test```.
 ```
-python src/train.py
+python src/$select_a_file$.py
 ```

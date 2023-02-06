@@ -1,0 +1,29 @@
+# reproducibility
+seed: 42
+
+# pl_trainer
+pl_trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: 'gpu'
+  devices: [0]
+  max_epochs: 1
+  # overfit_batches: 3
+  fast_dev_run: 50
+
+# early stopping callback
+# "early_stopping_callback: null" will disable early stopping
+# early_stopping_callback:
+#   _target_: pytorch_lightning.callbacks.EarlyStopping
+#   monitor: val_loss
+#   mode: min
+#   patience: 50
+
+# model_checkpoint_callback
+# "model_checkpoint_callback: null" will disable model checkpointing
+model_checkpoint_callback:
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  monitor: val_loss
+  mode: min
+  verbose: True
+  save_top_k: 1
+  dirpath: experiments/${model.model_name}

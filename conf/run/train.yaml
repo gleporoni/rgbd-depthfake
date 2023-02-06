@@ -1,0 +1,34 @@
+# reproducibility
+seed: 42
+
+# pl_trainer
+pl_trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: 'gpu'
+  # devices: [6]
+  max_epochs: 30
+  # auto_scale_batch_size: 'power'
+  # accumulate_grad_batches: 4
+  # gradient_clip_val: 10.0
+  # val_check_interval: 1.0  # you can specify an int "n" here => validation every "n" steps
+  # uncomment the lines below for training with mixed precision
+  # precision: 16
+  # amp_level: O2
+
+# early stopping callback
+# "early_stopping_callback: null" will disable early stopping
+# early_stopping_callback:
+#   _target_: pytorch_lightning.callbacks.EarlyStopping
+#   monitor: val_loss
+#   mode: min
+#   patience: 50
+
+# model_checkpoint_callback
+# "model_checkpoint_callback: null" will disable model checkpointing
+model_checkpoint_callback:
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  monitor: val_loss
+  mode: min
+  verbose: True
+  save_top_k: 1
+  dirpath: experiments/${model.model_name}

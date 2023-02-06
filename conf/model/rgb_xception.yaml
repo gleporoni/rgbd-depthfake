@@ -1,0 +1,6 @@
+model_name: "rgb_xception"
+
+backbone: "xception"
+
+learning_rate: 1e-4
+

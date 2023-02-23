@@ -48,3 +48,4 @@ __pypackages__/
 experiments/
 multirun/
 dataset/
+subset/

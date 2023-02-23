@@ -11,7 +11,7 @@ RUN apt-get update && apt-get upgrade -y
 RUN pip install --upgrade pip
 RUN curl https://bootstrap.pypa.io/get-pip.py | python
 RUN pip install -r requirements.txt
-ARG WANDB_API_KEY
+ARG WANDB_API_KEY 
 RUN wandb login $WANDB_API_KEY
 RUN git config --global --add safe.directory /workdir
 

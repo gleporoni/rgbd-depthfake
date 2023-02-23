@@ -13,10 +13,6 @@ import wandb
 from data.data_loader import FaceForensicsPlusPlus
 from model.rgb import RGB
 from model.depthfake import DepthFake
-from model.doubledepthfake import DoubleDepthFake
-from torchvision.utils import save_image
-
-
 
 
 log = logging.getLogger(__name__)
@@ -27,11 +23,10 @@ def train(conf: omegaconf.DictConfig) -> None:
     # reproducibility
     pl.seed_everything(conf.run.seed)
 
-
     # loggers
     csv_logger = CSVLogger(
         "logs",
-        name=f"{conf.model.model_name}_{conf.data.compression_level[0]}_{datetime.now().strftime('%d-%m-%Y %H-%M-%S.%f')}",
+        name=f"{conf.model.model_name}_{conf.data.compression_level[0]}_{datetime.now()}",
     )
     loggers = [csv_logger]
 
@@ -60,13 +55,8 @@ def train(conf: omegaconf.DictConfig) -> None:
         "depth_xception",
     ):
         model = DepthFake(conf)
-    elif conf.model.model_name in (
-        "depth_double_xception",
-    ):
-        model = DoubleDepthFake(conf)
     else:
         raise NotImplementedError
-
 
     # log gradients and model topology
     if (
@@ -75,7 +65,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     ):  # i.e. if not developing
         wandb_logger = WandbLogger(
             project=conf.project,
-            name=f"{conf.model.model_name}_{conf.data.compression_level[0]}_{datetime.now().strftime('%d-%m-%Y %H-%M-%S.%f')}",
+            name=f"{conf.model.model_name}_{conf.data.compression_level[0]}_{datetime.now()}",
         )
         loggers.append(wandb_logger)
         wandb_logger.watch(model)

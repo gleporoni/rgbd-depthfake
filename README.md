@@ -1,4 +1,4 @@
-# Depthfake
+# rgbd-depthfake
 
 Instruction to run the code:
 
@@ -13,3 +13,4 @@ Instruction to run the code:
 ```
 python src/$select_a_file$.py
 ```
+# 

@@ -9,8 +9,6 @@ from omegaconf import DictConfig
 from PIL import Image
 
 from torch.utils.data import Dataset
-import os
-
 
 logger = logging.getLogger(__name__)
 

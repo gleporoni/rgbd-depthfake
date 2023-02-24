@@ -32,3 +32,9 @@ model_checkpoint_callback:
   verbose: True
   save_top_k: 1
   dirpath: experiments/${model.model_name}
+
+double_depth_network:
+  use_pretain: True
+  rgb_checkpoint: weights/rgb_xception/epoch=0-step=637.ckpt
+  depth_checkpoint: weights/depth_xception/epoch=0-step=630.ckpt
+  split: 9 #9 for middle flow, 17 for exit flow

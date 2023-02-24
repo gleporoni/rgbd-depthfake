@@ -21,65 +21,93 @@ class DoubleDepthFake(pl.LightningModule):
                 "xception", pretrained=True, num_classes=self.num_classes
             )
 
-            # 9 for middle flow, 17 for exit flow
+            #load pretrained weights
+            if self.conf.run.double_depth_network.use_pretain:
+                
+                self.rgb_model = timm.create_model(
+                    "xception", pretrained=False, num_classes=self.num_classes
+                )              
+                self.depth_model = timm.create_model(
+                    "xception", pretrained=False, num_classes=self.num_classes
+                )
+                
+                base_path = Path(Path(__file__).parent, "../")
+                rgb_checkpoint = Path(
+                    base_path,
+                    self.conf.run.double_depth_network.rgb_checkpoint,
+                )
+                depth_checkpoint = Path(
+                    base_path,
+                    self.conf.run.double_depth_network.depth_checkpoint,
+                )
+                
+                #load weights for rgb part
+                rgb_model.load_from_checkpoint(checkpoint_path=rgb_checkpoint)
 
-            self.model_RGB = torch.nn.Sequential(*(list(self.model.children())[:9])) 
+                #setup first layer to accomodate depth info
+                weights = self.depth_model.conv1.weight
+                kernel_size = tuple(self.depth_model.conv1.kernel_size)
+                stride = tuple(self.depth_model.conv1.stride)
+                out_features = weights.shape[0]
+                new_features = torch.nn.Conv2d(
+                    4, out_features, kernel_size=kernel_size, stride=stride
+                )
+                self.depth_model.conv1 = new_features
 
-            # Get the pre-trained weights of the first layer
-            weights = self.model.conv1.weight
-            kernel_size = tuple(self.model.conv1.kernel_size)
-            stride = tuple(self.model.conv1.stride)
-            out_features = weights.shape[0]
-            new_features = torch.nn.Conv2d(
-                1, out_features, kernel_size=kernel_size, stride=stride
-            )
-            # For Depth-channel weight should randomly initialized with Gaussian
-            torch.nn.init.xavier_uniform_(new_features.weight)
-            self.model.conv1 = new_features
-            self.model_Depth = torch.nn.Sequential(*(list(self.model.children())[:9])) 
+                #load weights for rgbd part
+                depth_model.load_from_checkpoint(checkpoint_path=depth_checkpoint)
+
+                #remove rgb input and take only depth input in the first layer
+                weights = self.depth_model.conv1.weight
+                new_features = torch.nn.Conv2d(
+                    1, out_features, kernel_size=kernel_size, stride=stride
+                )
+                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                self.depth_model.conv1 = new_features
+
+                #freeze the models
+                for param in self.rgb_model.parameters():
+                    param.requires_grad = False
+                for param in self.depth_model.parameters():
+                    param.requires_grad = False
+                
+                split = self.conf.run.double_depth_network.split
+
+                self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.children())[:split]))
+                self.depth_model = torch.nn.Sequential(*(list(self.depth_model.children())[:split]))
+                self.concat_layer = torch.nn.Conv2d(
+                    1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
+                )
+                torch.nn.init.xavier_uniform_(self.concat_layer.weight)
+                self.model = torch.nn.Sequential(*(list(self.model.children())[split:])) 
+            else:
+                print("Not Implemented")
+                # # 9 for middle flow, 17 for exit flow
+
+                # self.model_RGB = torch.nn.Sequential(*(list(self.model.children())[:9])) 
+
+                # # Get the pre-trained weights of the first layer
+                # weights = self.model.conv1.weight
+                # kernel_size = tuple(self.model.conv1.kernel_size)
+                # stride = tuple(self.model.conv1.stride)
+                # out_features = weights.shape[0]
+                # new_features = torch.nn.Conv2d(
+                #     1, out_features, kernel_size=kernel_size, stride=stride
+                # )
+                # # For Depth-channel weight should randomly initialized with Gaussian
+                # torch.nn.init.xavier_uniform_(new_features.weight)
+                # self.model.conv1 = new_features
+                # self.model_Depth = torch.nn.Sequential(*(list(self.model.children())[:9])) 
 
 
-            # # setup concatenation layer
 
-            # weights = self.model.block4.rep[1].conv1.weight
-            # kernel_size = tuple(self.model.block4.rep[1].conv1.kernel_size)
-            # stride = tuple(self.model.block4.rep[1].conv1.stride)
-            # padding = tuple(self.model.block4.rep[1].conv1.padding)
-            # groups = self.model.block4.rep[1].conv1.groups
-            # bias = self.model.block4.rep[1].conv1.bias
-            # out_features = weights.shape[0]
-            # new_features = torch.nn.Conv2d(
-            #     1456, out_features*2, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups*2, bias=bias
+
+            # self.concat_layer = torch.nn.Conv2d(
+            #     1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
             # )
+            # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
 
-            # print(new_features.weight.shape)
-            # print(weights.shape)
-            # new_features.weight.data[:728, :, :, :] = torch.nn.Parameter(weights)
-            # new_features.weight.data[728:, :, :, :] = torch.nn.Parameter(weights)
-            # self.model.block4.rep[1].conv1 = new_features
-
-
-            # weights = self.model.block4.rep[1].pointwise.weight
-            # kernel_size = tuple(self.model.block4.rep[1].pointwise.kernel_size)
-            # stride = tuple(self.model.block4.rep[1].pointwise.stride)
-            # bias = self.model.block4.rep[1].pointwise.bias
-            # out_features = weights.shape[0]
-            # new_features = torch.nn.Conv2d(
-            #     1456, out_features, kernel_size=kernel_size, stride=stride, bias=bias
-            # )
-
-            # print(new_features.weight.shape)
-            # print(weights.shape)
-            # new_features.weight.data[:, :728, :, :] = torch.nn.Parameter(weights)
-            # new_features.weight.data[:, 728:, :, :] = torch.nn.Parameter(weights)
-            # self.model.block4.rep[1].pointwise = new_features
-
-            self.concat_layer = torch.nn.Conv2d(
-                1456, 728, kernel_size=(3,3), stride=(1,1)
-            )
-            torch.nn.init.xavier_uniform_(self.concat_layer.weight)
-
-            self.model = torch.nn.Sequential(*(list(self.model.children())[9:])) 
+            # self.model = torch.nn.Sequential(*(list(self.model.children())[9:])) 
 
 
         else:
@@ -92,12 +120,12 @@ class DoubleDepthFake(pl.LightningModule):
         self.save_hyperparameters(conf)
 
     def forward(self, x) -> dict:
-        x_rgb = self.model_RGB(x[:,:3,:,:])
-        x_depth = self.model_Depth(x[:,3:,:,:])
+        x_rgb = self.rgb_model(x[:,:3,:,:])
+        x_depth = self.depth_model(x[:,3:,:,:])
 
         x = torch.cat((x_rgb, x_depth), dim = 1)
-
         x = self.concat_layer(x)
+        
         x = self.model(x)
 
         return x

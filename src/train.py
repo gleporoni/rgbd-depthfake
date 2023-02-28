@@ -35,7 +35,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     )
     loggers = [csv_logger]
 
-    # data module declaration
+    # # data module declaration
     data = FaceForensicsPlusPlus(conf)
     data.setup(stage="fit")
     log.info(f"Train data: {len(data.train_data)}")
@@ -101,6 +101,8 @@ def train(conf: omegaconf.DictConfig) -> None:
     data.setup(stage="test")
     log.info(f"Test data: {len(data.test_data)}")
     trainer.test(model, datamodule=data)
+
+    trainer.save_checkpoint(filepath="/workdir/weights/depth_double.ckpt", weights_only = False)
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

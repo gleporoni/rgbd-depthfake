@@ -5,13 +5,16 @@ depth_path: "subset/Faceforensics/Depth-Faces"
 
 # rgb_path: "/media/subsetSSD/Faceforensics/RGB-Faces"
 # depth_path: "/media/subsetSSD/Faceforensics/Depth-Faces"
+# hha_path: "/media/subsetSSD/Faceforensics/HHA-Faces"
 
 compression_level: ['c40'] # ['raw', 'c23', 'c40']
 real: ["youtube"]
 attacks: ["Deepfakes"]
 #attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
-use_attacks: true
-use_depth: true
+use_attacks: True
+use_depth: True
+
+use_hha: True
 
 batch_size: 32
 num_workers: 8

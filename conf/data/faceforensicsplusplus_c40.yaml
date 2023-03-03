@@ -10,8 +10,8 @@ compression_level: ['c40'] # ['raw', 'c23', 'c40']
 real: ["youtube"]
 attacks: ["Deepfakes"]
 #attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
-use_attacks: true
-use_depth: false
+use_attacks: True
+use_depth: False
 
 batch_size: 32
 num_workers: 8

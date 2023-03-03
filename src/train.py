@@ -14,6 +14,7 @@ from data.data_loader import FaceForensicsPlusPlus
 from model.rgb import RGB
 from model.depthfake import DepthFake
 from model.doubledepthfake import DoubleDepthFake
+from model.attentiondepthfake import AttentionDepthFake
 from torchvision.utils import save_image
 
 
@@ -64,6 +65,10 @@ def train(conf: omegaconf.DictConfig) -> None:
         "depth_double_xception",
     ):
         model = DoubleDepthFake(conf)
+    elif conf.model.model_name in (
+        "depth_attention",
+    ):
+        model = AttentionDepthFake(conf)
     else:
         raise NotImplementedError
 

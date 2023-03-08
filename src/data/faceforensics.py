@@ -41,6 +41,7 @@ class FaceForensics(Dataset):
         self.attacks = self.conf.data.attacks
         self.use_depth = self.conf.data.use_depth
         self.use_hha = self.conf.data.use_hha
+        self.use_mixed = self.conf.data.use_mixed
 
         # Val and test data
         self.val_videos = VAL_VIDEOS
@@ -68,24 +69,35 @@ class FaceForensics(Dataset):
         # Load the image and apply transformations
         image = Image.open(self.dataset.images[idx]).convert("RGB")
 
-        # Load depth
-        if self.use_hha:
-            image = np.array(image)
-            tmp = str(self.dataset.depths[idx]).split('Depth-Faces')
-            path = tmp[0] + 'HHA-Faces' + tmp[1].split('.')[0]+'.png'
-            hha = Image.open(path).convert("RGB")
-            hha = np.array(hha)
-            
-            image = np.stack(
-                (image[:, :, 0], image[:, :, 1], image[:, :, 2], hha[:, :, 0], hha[:, :, 1], hha[:, :, 2]), axis=-1
-            )
-            
-        elif self.use_depth:
-            depth = np.load(self.dataset.depths[idx], allow_pickle=True)
-            image = np.array(image)
-            image = np.stack(
-                (image[:, :, 0], image[:, :, 1], image[:, :, 2], depth), axis=-1
-            )
+        if self.use_mixed:
+            # Load depth
+            if self.use_hha:
+                image = np.array(image)
+                tmp = str(self.dataset.depths[idx]).split('Depth-Faces')
+                path = tmp[0] + 'HHA-Faces' + tmp[1].split('.')[0]+'.png'
+                hha = Image.open(path).convert("RGB")
+                hha = np.array(hha)
+                
+                image = np.stack(
+                    (image[:, :, 0], image[:, :, 1], image[:, :, 2], hha[:, :, 0], hha[:, :, 1], hha[:, :, 2]), axis=-1
+                )
+                
+            elif self.use_depth:
+                depth = np.load(self.dataset.depths[idx], allow_pickle=True)
+                image = np.array(image)
+                image = np.stack(
+                    (image[:, :, 0], image[:, :, 1], image[:, :, 2], depth), axis=-1
+                )
+        else:
+            # Load depth
+            if self.use_hha:
+                tmp = str(self.dataset.depths[idx]).split('Depth-Faces')
+                path = tmp[0] + 'HHA-Faces' + tmp[1].split('.')[0]+'.png'
+                hha = Image.open(path).convert("RGB")
+                image = np.array(hha)
+
+            elif self.use_depth:
+                image = np.load(self.dataset.depths[idx], allow_pickle=True)
 
         if self.transform:
             image = self.transform(image)

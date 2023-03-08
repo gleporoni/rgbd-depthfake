@@ -107,7 +107,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     log.info(f"Test data: {len(data.test_data)}")
     trainer.test(model, datamodule=data)
 
-    trainer.save_checkpoint(filepath="/workdir/weights/depth_double.ckpt", weights_only = False)
+    # trainer.save_checkpoint(filepath="/workdir/weights/depth_double.ckpt", weights_only = False)
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

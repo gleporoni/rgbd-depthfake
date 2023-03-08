@@ -18,6 +18,9 @@ class DoubleDepthFake(pl.LightningModule):
         super().__init__()
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
+        in_features = 1
+        if self.conf.data.use_hha:
+            in_features = 3
 
 
         if self.conf.model.backbone == "xception":
@@ -29,7 +32,7 @@ class DoubleDepthFake(pl.LightningModule):
             if self.conf.run.double_depth_network.use_pretain:
                 
                 self.rgb_model = RGB(conf)
-                self.depth_model = DepthFake(conf)
+                self.depth_model = RGB(conf)
                 
                 base_path = Path(Path(__file__).parent, "../../")
                 rgb_checkpoint = Path(
@@ -48,15 +51,15 @@ class DoubleDepthFake(pl.LightningModule):
                 self.depth_model = self.depth_model.load_from_checkpoint(checkpoint_path=depth_checkpoint)
 
                 #remove rgb input and take only depth input in the first layer
-                weights = self.depth_model.model.conv1.weight
-                kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                stride = tuple(self.depth_model.model.conv1.stride)
-                out_features = weights.shape[0]
-                new_features = torch.nn.Conv2d(
-                    1, out_features, kernel_size=kernel_size, stride=stride
-                )
-                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                self.depth_model.model.conv1 = new_features
+                # weights = self.depth_model.model.conv1.weight
+                # kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
+                # stride = tuple(self.depth_model.model.conv1.stride)
+                # out_features = weights.shape[0]
+                # new_features = torch.nn.Conv2d(
+                #     in_features, out_features, kernel_size=kernel_size, stride=stride
+                # )
+                # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                # self.depth_model.model.conv1 = new_features
 
                 #freeze the models
                 for param in self.rgb_model.model.parameters():
@@ -75,19 +78,19 @@ class DoubleDepthFake(pl.LightningModule):
                 
             else:
                 self.rgb_model = RGB(conf)
-                self.depth_model = DepthFake(conf)
+                self.depth_model = RGB(conf)
 
 
                 #remove rgb input and take only depth input in the first layer
-                weights = self.depth_model.model.conv1.weight
-                kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                stride = tuple(self.depth_model.model.conv1.stride)
-                out_features = weights.shape[0]
-                new_features = torch.nn.Conv2d(
-                    1, out_features, kernel_size=kernel_size, stride=stride
-                )
-                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                self.depth_model.model.conv1 = new_features
+                # weights = self.depth_model.model.conv1.weight
+                # kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
+                # stride = tuple(self.depth_model.model.conv1.stride)
+                # out_features = weights.shape[0]
+                # new_features = torch.nn.Conv2d(
+                #     in_features, out_features, kernel_size=kernel_size, stride=stride
+                # )
+                # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                # self.depth_model.model.conv1 = new_features
 
                 split = self.conf.run.double_depth_network.split
                 self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split]))

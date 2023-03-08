@@ -70,84 +70,86 @@ def test(conf: omegaconf.DictConfig) -> None:
     model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_double_xception_exit/epoch=0-step=630.ckpt" )
     
     feature_extractor = model.concat_layer
-    print(feature_extractor.weight.data.shape)
-    for i in range(728):
-        print(torch.sum(torch.abs(torch.flatten(feature_extractor.weight.data[i][:728]))))
-        print(torch.sum(torch.abs(torch.flatten(feature_extractor.weight.data[i][728:]))))
-        print("--------------------------")
+
+    #find data activation
+    # print(feature_extractor.weight.data.shape)
+    # for i in range(728):
+    #     print(torch.sum(torch.abs(torch.flatten(feature_extractor.weight.data[i][:728]))))
+    #     print(torch.sum(torch.abs(torch.flatten(feature_extractor.weight.data[i][728:]))))
+    #     print("--------------------------")
 
 
 
-    # tmp = next(iter(data.train_dataloader()))
-    # inputs = tmp['image']
-    # classes = tmp['label']
-    # print("input shape")
-    # print(inputs.shape)
+    tmp = next(iter(data.train_dataloader()))
+    inputs = tmp['image']
+    classes = tmp['label']
+    print("input shape")
+    print(inputs.shape)
 
-    # filepath_rgb = Path("/workdir/testfeature/rgb_input.png")
-
-
-    # if conf.data.use_depth:
-    #     img_grid_rgb = utils.make_grid(inputs[:16, :3, :, :]/255, nrow=4, padding=10)
+    filepath_rgb = Path("/workdir/testfeature/rgb_input.png")
 
 
-    #     depth = inputs[:, 3, :, :]
-    #     max = torch.max(torch.flatten(depth))
-    #     img_grid_depth = utils.make_grid(depth[:16, None, :, :]/max, nrow=4, padding=10)
-    #     filepath_depth = Path("/workdir/testfeature/depth_input.png")
-    #     utils.save_image(img_grid_depth, filepath_depth)
+    if conf.data.use_depth:
+        img_grid_rgb = utils.make_grid(inputs[:16, :3, :, :]/255, nrow=4, padding=10)
 
-    # else: 
-    #      img_grid_rgb = utils.make_grid(inputs[:16, :, :, :], nrow=4, padding=10)
 
-    # utils.save_image(img_grid_rgb, filepath_rgb)
+        depth = inputs[:, 3, :, :]
+        max = torch.max(torch.flatten(depth))
+        img_grid_depth = utils.make_grid(depth[:16, None, :, :]/max, nrow=4, padding=10)
+        filepath_depth = Path("/workdir/testfeature/depth_input.png")
+        utils.save_image(img_grid_depth, filepath_depth)
 
-    # if conf.model.model_name == 'depth_double_xception':
-    #     x_rgb = model.rgb_model(inputs[:16,:3,:,:])
-    #     x_depth = model.depth_model(inputs[:16,3:,:,:])
+    else: 
+         img_grid_rgb = utils.make_grid(inputs[:16, :, :, :], nrow=4, padding=10)
 
-    #     x = torch.cat((x_rgb, x_depth), dim = 1)
-    #     features = model.concat_layer(x)
-    # elif conf.model.model_name == 'depth_attention':
-    #     features = depth_attention(model, inputs[:16, :, :, :])
+    utils.save_image(img_grid_rgb, filepath_rgb)
 
-    # else:
-    #     feature_extractor = torch.nn.Sequential(*(list(model.model.children())[:17]))
-    #     features = feature_extractor(inputs[:16, :, :, :])
+    if conf.model.model_name == 'depth_double_xception':
+        x_rgb = model.rgb_model(inputs[:16,:3,:,:])
+        x_depth = model.depth_model(inputs[:16,3:,:,:])
 
-    # if conf.model.model_name == 'depth_attention':
-    #     names = [["features_rgb_1", "features_depth_1", "features_mix_1"],
-    #         ["features_rgb_2", "features_depth_2", "features_mix_2"],
-    #         ["features_rgb_3", "features_depth_3", "features_mix_3"],
-    #         ["features_rgb_4", "features_depth_4", "features_mix_4"]]
-    #     for group, subname in zip(features, names):
-    #         for feature, name in zip(group, subname):
-    #             processed = []
-    #             for feature_map in feature:
-    #                 feature_map = feature_map.squeeze(0)
-    #                 gray_scale = torch.sum(feature_map,0)
-    #                 gray_scale = gray_scale / feature_map.shape[0]
-    #                 processed.append(gray_scale.data.cpu().numpy())
-    #             processed = torch.Tensor(processed)
-    #             img_grid_features = utils.make_grid(processed[:16, None, :, :], nrow=4, padding=10)
-    #             filepath_features = Path("/workdir/testfeature/"+name+".png")
-    #             utils.save_image(img_grid_features, filepath_features) 
+        x = torch.cat((x_rgb, x_depth), dim = 1)
+        features = model.concat_layer(x)
+    elif conf.model.model_name == 'depth_attention':
+        features = depth_attention(model, inputs[:16, :, :, :])
 
-    # else:
+    else:
+        feature_extractor = torch.nn.Sequential(*(list(model.model.children())[:17]))
+        features = feature_extractor(inputs[:16, :, :, :])
 
-    #     print(features.shape)
-    #     processed = []
-    #     for feature_map in features:
-    #         feature_map = feature_map.squeeze(0)
-    #         gray_scale = torch.sum(feature_map,0)
-    #         gray_scale = gray_scale / feature_map.shape[0]
-    #         processed.append(gray_scale.data.cpu().numpy())
-    #     processed = torch.Tensor(processed)
-    #     print(processed.shape)
+    if conf.model.model_name == 'depth_attention':
+        names = [["features_rgb_1", "features_depth_1", "features_mix_1"],
+            ["features_rgb_2", "features_depth_2", "features_mix_2"],
+            ["features_rgb_3", "features_depth_3", "features_mix_3"],
+            ["features_rgb_4", "features_depth_4", "features_mix_4"]]
+        for group, subname in zip(features, names):
+            for feature, name in zip(group, subname):
+                processed = []
+                for feature_map in feature:
+                    feature_map = feature_map.squeeze(0)
+                    gray_scale = torch.sum(feature_map,0)
+                    gray_scale = gray_scale / feature_map.shape[0]
+                    processed.append(gray_scale.data.cpu().numpy())
+                processed = torch.Tensor(processed)
+                img_grid_features = utils.make_grid(processed[:16, None, :, :], nrow=4, padding=10)
+                filepath_features = Path("/workdir/testfeature/"+name+".png")
+                utils.save_image(img_grid_features, filepath_features) 
 
-    #     img_grid_features = utils.make_grid(processed[:16, None, :, :], nrow=4, padding=10)
-    #     filepath_features = Path("/workdir/testfeature/features.png")
-    #     utils.save_image(img_grid_features, filepath_features)
+    else:
+
+        print(features.shape)
+        processed = []
+        for feature_map in features:
+            feature_map = feature_map.squeeze(0)
+            gray_scale = torch.sum(feature_map,0)
+            gray_scale = gray_scale / feature_map.shape[0]
+            processed.append(gray_scale.data.cpu().numpy())
+        processed = torch.Tensor(processed)
+        print(processed.shape)
+
+        img_grid_features = utils.make_grid(processed[:16, None, :, :], nrow=4, padding=10)
+        filepath_features = Path("/workdir/testfeature/features.png")
+        utils.save_image(img_grid_features, filepath_features)
 
 
 
@@ -217,6 +219,13 @@ def depth_attention(model, x):
             [features_rgb_2, features_depth_2, features_mix_2],
             [features_rgb_3, features_depth_3, features_mix_3],
             [features_rgb_4, features_depth_4, features_mix_4]]
+
+def compute_distance(im1, im2):
+    x1 = im1.flatten()
+    x2 = im2.flatten()
+
+    return np.linalg.norm(x1-x2)
+    
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

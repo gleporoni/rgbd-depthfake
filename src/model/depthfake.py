@@ -15,8 +15,8 @@ class DepthFake(pl.LightningModule):
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
         in_features = 4
-        # if self.conf.data.use_hha:
-            # in_features = 6
+        if self.conf.data.use_hha:
+            in_features = 6
 
         if self.conf.model.backbone == "resnet50":
             # init a pretrained resnet

@@ -142,7 +142,7 @@ class FaceForensics(Dataset):
 
                     # Add labels
                     list_of_labels = self._load_labels(list_of_images, real)
-
+                    
                     images += list_of_images
                     depths += list_of_depths
                     labels += list_of_labels

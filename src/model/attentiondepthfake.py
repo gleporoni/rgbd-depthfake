@@ -18,7 +18,9 @@ class AttentionDepthFake(pl.LightningModule):
         super().__init__()
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
-
+        in_features = 1
+        if self.conf.data.use_hha:
+            in_features = 3
 
         if self.conf.model.backbone == "resnet50":
             model = timm.create_model(
@@ -38,7 +40,7 @@ class AttentionDepthFake(pl.LightningModule):
 
             # depth branch
 
-            tmp_conv_depth = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3,
+            tmp_conv_depth = torch.nn.Conv2d(in_features, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
             tmp_layer_depth = list(model.children())[1:3]
             tmp_layer_depth.insert(0, tmp_conv_depth)

@@ -78,27 +78,42 @@ class DoubleDepthFake(pl.LightningModule):
                 
             else:
                 self.rgb_model = RGB(conf)
-                self.depth_model = DepthFake(conf)
+                self.depth_model = RGB(conf)
 
 
                 #remove rgb input and take only depth input in the first layer
-                weights = self.depth_model.model.conv1.weight
-                kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                stride = tuple(self.depth_model.model.conv1.stride)
-                out_features = weights.shape[0]
-                new_features = torch.nn.Conv2d(
-                    in_features, out_features, kernel_size=kernel_size, stride=stride
-                )
-                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                self.depth_model.model.conv1 = new_features
+                # weights = self.depth_model.model.conv1.weight
+                # kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
+                # stride = tuple(self.depth_model.model.conv1.stride)
+                # out_features = weights.shape[0]
+                # new_features = torch.nn.Conv2d(
+                #     in_features, out_features, kernel_size=kernel_size, stride=stride
+                # )
+                # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                # self.depth_model.model.conv1 = new_features
 
-                split = self.conf.run.double_depth_network.split
+                # split = self.conf.run.double_depth_network.split
+
+                # n = sum(1 for _ in self.rgb_model.model.parameters())
+                # half = int(n/2)
+
+                # for i, param in enumerate(self.rgb_model.model.parameters()):
+                #     if i > half:
+                #         break
+                #     param.requires_grad = False
+                # for i, param in enumerate(self.depth_model.model.parameters()):
+                #     if i > half:
+                #         break
+                #     param.requires_grad = False
                 self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:-1]))
                 self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:-1]))
                 # self.concat_layer = torch.nn.Conv2d(
                 #     1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
                 # )
-                self.fc_layer = torch.nn.Linear(in_features = 4096, out_features = 2, bias = True)
+
+                self.theta = torch.nn.Parameter(torch.rand(2048))
+
+                self.fc_layer = torch.nn.Linear(in_features = 2048, out_features = 2, bias = True)
                 # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
                 torch.nn.init.xavier_uniform_(self.fc_layer.weight)
                 # self.model = torch.nn.Sequential(*(list(self.model.children())[split:])) 
@@ -117,8 +132,10 @@ class DoubleDepthFake(pl.LightningModule):
     def forward(self, x) -> dict:
         x_rgb = self.rgb_model(x[:,:3,:,:])
         x_depth = self.depth_model(x[:,3:,:,:])
+        
+        x = self.theta * x_rgb + (torch.ones(2048)-self.theta)*x_depth
 
-        x = torch.cat((x_rgb, x_depth), dim = 1)
+        # x = torch.cat((x_rgb, x_depth), dim = 1)
         # x = self.concat_layer(x)
         
         # x = self.model(x)

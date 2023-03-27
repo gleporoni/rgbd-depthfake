@@ -112,12 +112,12 @@ class DepthFake(pl.LightningModule):
             stride = tuple(self.model.conv1.stride)
             out_features = weights.shape[0]
             new_features = torch.nn.Conv2d(
-                in_features, out_features, kernel_size=kernel_size, stride=stride
+                1, out_features, kernel_size=kernel_size, stride=stride
             )
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            # new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -152,7 +152,7 @@ class DepthFake(pl.LightningModule):
         self.save_hyperparameters(conf)
 
     def forward(self, x) -> dict:
-        x = self.model(x)
+        x = self.model(x[:,3:,:,:])
         return x
 
     def training_step(self, batch: dict, batch_idx: int) -> torch.Tensor:

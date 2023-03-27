@@ -16,6 +16,8 @@ from model.depthfake import DepthFake
 from model.doubledepthfake import DoubleDepthFake
 from model.attentiondepthfake import AttentionDepthFake
 from torchvision.utils import save_image
+from model.doubledepthfakeb import DoubleDepthFakeB
+
 
 
 
@@ -68,7 +70,11 @@ def train(conf: omegaconf.DictConfig) -> None:
     elif conf.model.model_name in (
         "depth_attention",
     ):
-        model = AttentionDepthFake(conf)
+        model = AttentionDepthFake(conf)    
+    elif conf.model.model_name in (
+        "depth_double_xceptionb",
+    ):
+        model = DoubleDepthFakeB(conf)
     else:
         raise NotImplementedError
 
@@ -107,7 +113,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     log.info(f"Test data: {len(data.test_data)}")
     trainer.test(model, datamodule=data)
 
-    # trainer.save_checkpoint(filepath="/workdir/weights/depth_double.ckpt", weights_only = False)
+    trainer.save_checkpoint(filepath="/workdir/weights/depth_double_bw_2.ckpt", weights_only = False)
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

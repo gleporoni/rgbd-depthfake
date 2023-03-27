@@ -78,19 +78,19 @@ class DoubleDepthFake(pl.LightningModule):
                 
             else:
                 self.rgb_model = RGB(conf)
-                self.depth_model = RGB(conf)
+                self.depth_model = DepthFake(conf)
 
 
                 #remove rgb input and take only depth input in the first layer
-                # weights = self.depth_model.model.conv1.weight
-                # kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                # stride = tuple(self.depth_model.model.conv1.stride)
-                # out_features = weights.shape[0]
-                # new_features = torch.nn.Conv2d(
-                #     in_features, out_features, kernel_size=kernel_size, stride=stride
-                # )
-                # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                # self.depth_model.model.conv1 = new_features
+                weights = self.depth_model.model.conv1.weight
+                kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
+                stride = tuple(self.depth_model.model.conv1.stride)
+                out_features = weights.shape[0]
+                new_features = torch.nn.Conv2d(
+                    in_features, out_features, kernel_size=kernel_size, stride=stride
+                )
+                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                self.depth_model.model.conv1 = new_features
 
                 # split = self.conf.run.double_depth_network.split
 
@@ -111,7 +111,8 @@ class DoubleDepthFake(pl.LightningModule):
                 #     1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
                 # )
 
-                self.theta = torch.nn.Parameter(torch.rand(2048))
+                self.theta = torch.nn.Parameter(torch.ones(2048)*0.5)
+                self.ones = torch.ones(2048).to('cuda')
 
                 self.fc_layer = torch.nn.Linear(in_features = 2048, out_features = 2, bias = True)
                 # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
@@ -133,7 +134,7 @@ class DoubleDepthFake(pl.LightningModule):
         x_rgb = self.rgb_model(x[:,:3,:,:])
         x_depth = self.depth_model(x[:,3:,:,:])
         
-        x = self.theta * x_rgb + (torch.ones(2048)-self.theta)*x_depth
+        x = self.theta * x_rgb + (self.ones-self.theta)*x_depth
 
         # x = torch.cat((x_rgb, x_depth), dim = 1)
         # x = self.concat_layer(x)

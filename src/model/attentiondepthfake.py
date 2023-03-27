@@ -10,7 +10,7 @@ from torchvision import models
 from pathlib import Path
 from model.rgb import RGB
 from model.depthfake import DepthFake
-
+import copy
 
 
 class AttentionDepthFake(pl.LightningModule):
@@ -29,12 +29,12 @@ class AttentionDepthFake(pl.LightningModule):
 
             # rgb branch
 
-            self.conv_rgb =  torch.nn.Sequential(*(list(model.children())[:3]))
-            self.maxpool_rgb = model.maxpool
-            self.layer1_rgb = model.layer1
-            self.layer2_rgb = model.layer2
-            self.layer3_rgb = model.layer3
-            self.layer4_rgb = model.layer4
+            self.conv_rgb =  copy.deepcopy(torch.nn.Sequential(*(list(model.children())[:3])))
+            self.maxpool_rgb = copy.deepcopy(model.maxpool)
+            self.layer1_rgb = copy.deepcopy(model.layer1)
+            self.layer2_rgb = copy.deepcopy(model.layer2)
+            self.layer3_rgb = copy.deepcopy(model.layer3)
+            self.layer4_rgb = copy.deepcopy(model.layer4)
 
 
 
@@ -44,20 +44,20 @@ class AttentionDepthFake(pl.LightningModule):
                                bias=False)
             tmp_layer_depth = list(model.children())[1:3]
             tmp_layer_depth.insert(0, tmp_conv_depth)
-            self.conv_depth = torch.nn.Sequential(*(tmp_layer_depth))
-            self.maxpool_detph = model.maxpool
+            self.conv_depth = copy.deepcopy(torch.nn.Sequential(*(tmp_layer_depth)))
+            self.maxpool_detph = copy.deepcopy(model.maxpool)
 
-            self.layer1_depth = model.layer1
-            self.layer2_depth = model.layer2
-            self.layer3_depth = model.layer3
-            self.layer4_depth = model.layer4
+            self.layer1_depth = copy.deepcopy(model.layer1)
+            self.layer2_depth = copy.deepcopy(model.layer2)
+            self.layer3_depth = copy.deepcopy(model.layer3)
+            self.layer4_depth = copy.deepcopy(model.layer4)
 
             # mixed branch
 
             self.atten_rgb_0 = self.channel_attention(64)
             self.atten_depth_0 = self.channel_attention(64)
 
-            self.maxpool_mix = model.maxpool
+            self.maxpool_mix = copy.deepcopy(model.maxpool)
 
             self.atten_rgb_1 = self.channel_attention(64*4)
             self.atten_depth_1 = self.channel_attention(64*4)
@@ -68,16 +68,16 @@ class AttentionDepthFake(pl.LightningModule):
             self.atten_rgb_4 = self.channel_attention(512*4)
             self.atten_depth_4 = self.channel_attention(512*4)
 
-            self.layer1_mix = model.layer1
-            self.layer2_mix = model.layer2
-            self.layer3_mix = model.layer3
-            self.layer4_mix = model.layer4
+            self.layer1_mix = copy.deepcopy(model.layer1)
+            self.layer2_mix = copy.deepcopy(model.layer2)
+            self.layer3_mix = copy.deepcopy(model.layer3)
+            self.layer4_mix = copy.deepcopy(model.layer4)
 
 
             # classification
 
-            self.global_pool = model.global_pool
-            self.fc = model.fc
+            self.global_pool = copy.deepcopy(model.global_pool)
+            self.fc = copy.deepcopy(model.fc)
 
             tmp_conv_depth = None
             tmp_layer_depth = None

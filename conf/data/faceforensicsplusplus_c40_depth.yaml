@@ -13,7 +13,7 @@ attacks: ["Deepfakes"]
 #attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
 use_attacks: True
 use_depth: True
-use_hha: True
+use_hha: False
 use_mixed: True
 
 batch_size: 16

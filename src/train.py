@@ -17,6 +17,7 @@ from model.doubledepthfake import DoubleDepthFake
 from model.attentiondepthfake import AttentionDepthFake
 from torchvision.utils import save_image
 from model.doubledepthfakeb import DoubleDepthFakeB
+from model.maskdepthfake import MaskDepthFake
 
 
 
@@ -75,6 +76,10 @@ def train(conf: omegaconf.DictConfig) -> None:
         "depth_double_xceptionb",
     ):
         model = DoubleDepthFakeB(conf)
+    elif conf.model.model_name in (
+        "depth_mask",
+    ):
+        model = MaskDepthFake(conf)
     else:
         raise NotImplementedError
 

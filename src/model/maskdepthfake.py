@@ -10,6 +10,7 @@ from torchvision import models
 from pathlib import Path
 from model.rgb import RGB
 from model.depthfake import DepthFake
+import copy
 
 
 
@@ -89,7 +90,7 @@ class MaskDepthFake(pl.LightningModule):
                 new_features = torch.nn.Conv2d(
                     in_features, out_features, kernel_size=kernel_size, stride=stride
                 )
-                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                torch.nn.init.xavier_uniform_(new_features.weight)
                 self.depth_model.model.conv1 = new_features
 
 
@@ -111,7 +112,7 @@ class MaskDepthFake(pl.LightningModule):
 
                 # self.fc_layer = torch.nn.Linear(in_features = 2048, out_features = 2, bias = True)
                 # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
-                torch.nn.init.xavier_uniform_(self.fc_layer.weight)
+                # torch.nn.init.xavier_uniform_(self.fc_layer.weight)
                 self.model = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:]))) 
                 # self.model = None
 
@@ -129,9 +130,9 @@ class MaskDepthFake(pl.LightningModule):
         x_rgb = self.rgb_model(x[:,:3,:,:])
         x_depth = self.depth_model(x[:,3:,:,:])
         
-        x_mask = x_rgb.gt(0).to(torch.float32)
+        x_mask = x_depth.gt(0).to(torch.float32)
 
-        x = x_mask * x_depth
+        x = x_mask * x_rgb
         
         x = self.model(x)
 

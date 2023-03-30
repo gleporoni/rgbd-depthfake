@@ -12,6 +12,8 @@ from model.rgb import RGB
 from model.depthfake import DepthFake
 from model.doubledepthfake import DoubleDepthFake
 from model.doubledepthfakeb import DoubleDepthFakeB
+from model.maskdepthfake import MaskDepthFake
+
 import torch
 
 
@@ -21,12 +23,12 @@ log = logging.getLogger(__name__)
 
 def test(conf: omegaconf.DictConfig) -> None:
 
-    # reproducibility
-    pl.seed_everything(conf.run.seed)
+    # # reproducibility
+    # pl.seed_everything(conf.run.seed)
 
     # data module declaration
-    # data = FaceForensicsPlusPlus(conf)
-    # data.setup(stage="test")
+    data = FaceForensicsPlusPlus(conf)
+    data.setup(stage="fit")
 
     # main module declaration
     if conf.model.model_name in (
@@ -55,26 +57,29 @@ def test(conf: omegaconf.DictConfig) -> None:
         "depth_double_xceptionb",
     ):
         model = DoubleDepthFakeB(conf)
+    elif conf.model.model_name in (
+        "depth_mask",
+    ):
+        model = MaskDepthFake(conf)
     else:
         raise NotImplementedError
 
-    # tmp = next(iter(data.test_dataloader()))
-    # inputs = tmp['image']
-    # classes = tmp['label']
+    tmp = next(iter(data.train_dataloader()))
+    inputs = tmp['image']
+    classes = tmp['label']
 
-    # print(inputs.shape)
-    # print("-------")
+    print(inputs.shape)
+    print("-------")
 
     # model(inputs)
     
-    model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_double_bw.ckpt" )
+    model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_mask_1.ckpt" )
 
-    
-    print(list(list(model.rgb_conv_block_1.children())[0].children())[0].weight)
-    print(list(list(model.depth_conv_block_1.children())[0].children())[0].weight)
+    a = model.rgb_model(inputs[:2,:3,:,:])
+    print(a)
+    print(a.gt(0).to(torch.float32))
 
-
-    # trainer
+    # # trainer
     # trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
 
     # # Load a pretrained model from a checkpoint
@@ -83,14 +88,10 @@ def test(conf: omegaconf.DictConfig) -> None:
     #     base_path,
     #     conf.run.experiment.checkpoint_file,
     # )
-    # model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_double_w.ckpt" )
+    # model = model.load_from_checkpoint(checkpoint_path="/workdir/experiments/depth_double_xception/2023-03-13/08-49-04/experiments/depth_double_xception/epoch=1-step=1260.ckpt" )
 
-    # module test
+    # # module test
     # trainer.test(model, datamodule=data)
-
-    # print(torch.max(model.theta))
-    # print(torch.min(model.theta))
-    # print(torch.mean(model.theta))
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

@@ -18,6 +18,7 @@ from model.attentiondepthfake import AttentionDepthFake
 from torchvision.utils import save_image
 from model.doubledepthfakeb import DoubleDepthFakeB
 from model.maskdepthfake import MaskDepthFake
+from model.doubledepthfakemask import DoubleDepthFakeMask
 
 
 
@@ -118,7 +119,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     log.info(f"Test data: {len(data.test_data)}")
     trainer.test(model, datamodule=data)
 
-    trainer.save_checkpoint(filepath="/workdir/weights/depth_double_bw_2.ckpt", weights_only = False)
+    trainer.save_checkpoint(filepath="/workdir/weights/depth_mask.ckpt", weights_only = False)
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

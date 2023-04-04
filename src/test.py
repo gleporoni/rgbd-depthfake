@@ -13,6 +13,8 @@ from model.depthfake import DepthFake
 from model.doubledepthfake import DoubleDepthFake
 from model.doubledepthfakeb import DoubleDepthFakeB
 from model.maskdepthfake import MaskDepthFake
+from model.doubledepthfakemask import DoubleDepthFakeMask
+
 
 import torch
 
@@ -27,8 +29,8 @@ def test(conf: omegaconf.DictConfig) -> None:
     # pl.seed_everything(conf.run.seed)
 
     # data module declaration
-    data = FaceForensicsPlusPlus(conf)
-    data.setup(stage="fit")
+    # data = FaceForensicsPlusPlus(conf)
+    # data.setup(stage="test")
 
     # main module declaration
     if conf.model.model_name in (
@@ -61,23 +63,29 @@ def test(conf: omegaconf.DictConfig) -> None:
         "depth_mask",
     ):
         model = MaskDepthFake(conf)
+    elif conf.model.model_name in (
+        "depth_double_xception_mask",
+    ):
+        model = DoubleDepthFakeMask(conf)
     else:
         raise NotImplementedError
 
-    tmp = next(iter(data.train_dataloader()))
-    inputs = tmp['image']
-    classes = tmp['label']
+    # tmp = next(iter(data.train_dataloader()))
+    # inputs = tmp['image']
+    # classes = tmp['label']
 
-    print(inputs.shape)
-    print("-------")
+    # print(inputs.shape)
+    # print("-------")
 
     # model(inputs)
-    
-    model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_mask_1.ckpt" )
 
-    a = model.rgb_model(inputs[:2,:3,:,:])
-    print(a)
-    print(a.gt(0).to(torch.float32))
+    model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_double_mask.ckpt" )
+
+
+
+    # a = model.rgb_model(inputs[:2,:3,:,:])
+    # print(a)
+    # print(a.gt(0).to(torch.float32))
 
     # # trainer
     # trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
@@ -90,7 +98,7 @@ def test(conf: omegaconf.DictConfig) -> None:
     # )
     # model = model.load_from_checkpoint(checkpoint_path="/workdir/experiments/depth_double_xception/2023-03-13/08-49-04/experiments/depth_double_xception/epoch=1-step=1260.ckpt" )
 
-    # # module test
+    # module test
     # trainer.test(model, datamodule=data)
 
 

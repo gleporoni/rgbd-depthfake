@@ -14,9 +14,6 @@ import copy
 
 
 
-
-
-
 class DoubleDepthFakeMask(pl.LightningModule):
     def __init__(self, conf) -> None:
         super().__init__()
@@ -89,66 +86,66 @@ class DoubleDepthFakeMask(pl.LightningModule):
                 self.depth_model_init = copy.deepcopy(torch.nn.Sequential(*(tmp_model[:9])))
 
                 #remove rgb input and take only depth input in the first layer
-                # weights = self.depth_model_init[0].weight
-                # kernel_size = tuple(self.depth_model_init[0].kernel_size)
-                # stride = tuple(self.depth_model_init[0].stride)
-                # out_features = weights.shape[0]
-                # new_features = torch.nn.Conv2d(
-                #     in_features, out_features, kernel_size=kernel_size, stride=stride
-                # )
-                # # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                # torch.nn.init.xavier_uniform_(new_features.weight)
-                # self.depth_model_init[0] = new_features
+                weights = self.depth_model_init[0].weight
+                kernel_size = tuple(self.depth_model_init[0].kernel_size)
+                stride = tuple(self.depth_model_init[0].stride)
+                out_features = weights.shape[0]
+                new_features = torch.nn.Conv2d(
+                    in_features, out_features, kernel_size=kernel_size, stride=stride
+                )
+                # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
+                torch.nn.init.xavier_uniform_(new_features.weight)
+                self.depth_model_init[0] = new_features
 
 
                 # block 4
                 self.rgb_conv_block_4 = copy.deepcopy(list(tmp_model[9].children())[0])
                 self.depth_conv_block_4 = copy.deepcopy(list(tmp_model[9].children())[0])
                 self.concat_block_4 = copy.deepcopy(list(tmp_model[9].children())[0])                
-                self.theta_block_4 = torch.nn.Parameter(0.5)
+                # self.theta_block_4 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # block 5
                 self.rgb_conv_block_5 = copy.deepcopy(list(tmp_model[10].children())[0])
                 self.depth_conv_block_5 = copy.deepcopy(list(tmp_model[10].children())[0])
                 self.concat_block_5 = copy.deepcopy(list(tmp_model[10].children())[0])                
-                self.theta_block_5 = torch.nn.Parameter(0.5)
+                # self.theta_block_5 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # block 6
                 self.rgb_conv_block_6 = copy.deepcopy(list(tmp_model[11].children())[0])
                 self.depth_conv_block_6 = copy.deepcopy(list(tmp_model[11].children())[0])
                 self.concat_block_6 = copy.deepcopy(list(tmp_model[11].children())[0])
-                self.theta_block_6 = torch.nn.Parameter(0.5)
+                # self.theta_block_6 = torch.nn.Parameter(torch.Tensor([0.5]))
 
 
                 # block 7
                 self.rgb_conv_block_7 = copy.deepcopy(list(tmp_model[12].children())[0])
                 self.depth_conv_block_7 = copy.deepcopy(list(tmp_model[12].children())[0])
                 self.concat_block_7 = copy.deepcopy(list(tmp_model[12].children())[0])
-                self.theta_block_7 = torch.nn.Parameter(0.5)
+                # self.theta_block_7 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # block 8
                 self.rgb_conv_block_8 = copy.deepcopy(list(tmp_model[13].children())[0])
                 self.depth_conv_block_8 = copy.deepcopy(list(tmp_model[13].children())[0])
                 self.concat_block_8 = copy.deepcopy(list(tmp_model[13].children())[0])
-                self.theta_block_8 = torch.nn.Parameter(0.5)
+                # self.theta_block_8 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # block 9
                 self.rgb_conv_block_9 = copy.deepcopy(list(tmp_model[14].children())[0])
                 self.depth_conv_block_9 = copy.deepcopy(list(tmp_model[14].children())[0])
                 self.concat_block_9 = copy.deepcopy(list(tmp_model[14].children())[0])
-                self.theta_block_9 = torch.nn.Parameter(0.5)
+                # self.theta_block_9 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # block 10
                 self.rgb_conv_block_10 = copy.deepcopy(list(tmp_model[15].children())[0])
                 self.depth_conv_block_10 = copy.deepcopy(list(tmp_model[15].children())[0])
                 self.concat_block_10 = copy.deepcopy(list(tmp_model[15].children())[0])
-                self.theta_block_10 = torch.nn.Parameter(0.5)
+                # self.theta_block_10 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # block 11
                 self.rgb_conv_block_11 = copy.deepcopy(list(tmp_model[16].children())[0])
                 self.depth_conv_block_11 = copy.deepcopy(list(tmp_model[16].children())[0])
                 self.concat_block_11 = copy.deepcopy(list(tmp_model[16].children())[0])
-                self.theta_block_11 = torch.nn.Parameter(0.5)
+                # self.theta_block_11 = torch.nn.Parameter(torch.Tensor([0.5]))
 
                 # net after block 11
                 self.concat_model_final = copy.deepcopy(torch.nn.Sequential(*(tmp_model[17:25])))
@@ -217,11 +214,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_4*x_rgb + (1-self.theta_block_4)*x_depth
-        
+        # x_concat = self.theta_block_4*x_rgb + (1-self.theta_block_4)*x_depth
+        x_concat = x_rgb + x_depth
+
         x = x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_4(x)
         x_rgb = self.rgb_conv_block_4(x_rgb)
@@ -232,11 +231,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_5*x_rgb + (1-self.theta_block_5)*x_depth
+        # x_concat = self.theta_block_5*x_rgb + (1-self.theta_block_5)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_5(x)
         x_rgb = self.rgb_conv_block_5(x_rgb)
@@ -247,11 +248,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_6*x_rgb + (1-self.theta_block_6)*x_depth
+        # x_concat = self.theta_block_6*x_rgb + (1-self.theta_block_6)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_6(x)
         x_rgb = self.rgb_conv_block_6(x_rgb)
@@ -262,11 +265,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_7*x_rgb + (1-self.theta_block_7)*x_depth
+        # x_concat = self.theta_block_7*x_rgb + (1-self.theta_block_7)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_7(x)
         x_rgb = self.rgb_conv_block_7(x_rgb)
@@ -277,11 +282,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_8*x_rgb + (1-self.theta_block_8)*x_depth
+        # x_concat = self.theta_block_8*x_rgb + (1-self.theta_block_8)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_8(x)
         x_rgb = self.rgb_conv_block_8(x_rgb)
@@ -292,11 +299,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_9*x_rgb + (1-self.theta_block_9)*x_depth
+        # x_concat = self.theta_block_9*x_rgb + (1-self.theta_block_9)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_9(x)
         x_rgb = self.rgb_conv_block_9(x_rgb)
@@ -307,11 +316,13 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_10*x_rgb + (1-self.theta_block_10)*x_depth
+        # x_concat = self.theta_block_10*x_rgb + (1-self.theta_block_10)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_10(x)
         x_rgb = self.rgb_conv_block_10(x_rgb)
@@ -322,15 +333,17 @@ class DoubleDepthFakeMask(pl.LightningModule):
         x_depth_mask = x_depth.gt(0).to(torch.float32)
         x_mask = x_rgb_mask * x_depth_mask
 
-        x_concat = self.theta_block_11*x_rgb + (1-self.theta_block_11)*x_depth
+        # x_concat = self.theta_block_11*x_rgb + (1-self.theta_block_11)*x_depth
+        x_concat = x_rgb + x_depth
         
         x = x + x_mask * x_concat
-        x_rgb = x_rgb * x_rgb_mask # try comment this line
-        x_depth = x_depth * x_depth_mask # try comment this line
+        x_mask_union = torch.clamp(x_rgb_mask+x_depth_mask, max=1)
+        x_rgb = x_rgb * x_mask_union # try comment this line
+        x_depth = x_depth * x_mask_union # try comment this line
 
         x = self.concat_block_11(x)
-        x_rgb = self.rgb_conv_block_11(x_rgb)
-        x_depth = self.depth_conv_block_11(x_depth)
+        # x_rgb = self.rgb_conv_block_11(x_rgb)
+        # x_depth = self.depth_conv_block_11(x_depth)
     
         # final block conv
         x = self.concat_model_final(x)

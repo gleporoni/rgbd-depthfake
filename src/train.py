@@ -81,6 +81,10 @@ def train(conf: omegaconf.DictConfig) -> None:
         "depth_mask",
     ):
         model = MaskDepthFake(conf)
+    elif conf.model.model_name in (
+        "depth_double_xception_mask",
+    ):
+        model = DoubleDepthFakeMask(conf)
     else:
         raise NotImplementedError
 

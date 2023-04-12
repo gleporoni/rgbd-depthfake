@@ -7,8 +7,8 @@ hydra:
 
 defaults:
   - _self_
-  - run: train
-  - model: depth_mask
+  - run: test
+  - model: depth_mask_xception
   - data: faceforensicsplusplus_c40_depth
 
-project: 'depthfake'
+project: 'depthfake' 

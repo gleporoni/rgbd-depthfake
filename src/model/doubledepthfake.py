@@ -10,7 +10,7 @@ from torchvision import models
 from pathlib import Path
 from model.rgb import RGB
 from model.depthfake import DepthFake
-
+import copy
 
 
 class DoubleDepthFake(pl.LightningModule):
@@ -19,106 +19,68 @@ class DoubleDepthFake(pl.LightningModule):
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
         in_features = 1
-        if self.conf.data.use_hha:
+        if self.conf.data.depth_type  == 'hha':
             in_features = 3
 
+        self.fuse = self.concat
 
         if self.conf.model.backbone == "xception":
             self.model = timm.create_model(
                 "xception", pretrained=True, num_classes=self.num_classes
             )
 
-            #load pretrained weights
-            if self.conf.run.double_depth_network.use_pretain:
-                
-                self.rgb_model = RGB(conf)
-                self.depth_model = RGB(conf)
-                
-                base_path = Path(Path(__file__).parent, "../../")
-                rgb_checkpoint = Path(
-                    base_path,
-                    self.conf.run.double_depth_network.rgb_checkpoint,
-                )
-                depth_checkpoint = Path(
-                    base_path,
-                    self.conf.run.double_depth_network.depth_checkpoint,
-                )
-                
-                #load weights for rgb part
-                self.rgb_model = self.rgb_model.load_from_checkpoint(checkpoint_path=rgb_checkpoint)
+            self.rgb_model = RGB(conf)
+            self.depth_model = RGB(conf)
 
+            split = self.conf.model.split
 
-                self.depth_model = self.depth_model.load_from_checkpoint(checkpoint_path=depth_checkpoint)
-
-                #remove rgb input and take only depth input in the first layer
-                # weights = self.depth_model.model.conv1.weight
-                # kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                # stride = tuple(self.depth_model.model.conv1.stride)
-                # out_features = weights.shape[0]
-                # new_features = torch.nn.Conv2d(
-                #     in_features, out_features, kernel_size=kernel_size, stride=stride
-                # )
-                # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                # self.depth_model.model.conv1 = new_features
-
-                #freeze the models
-                for param in self.rgb_model.model.parameters():
-                    param.requires_grad = False
-                for param in self.depth_model.model.parameters():
-                    param.requires_grad = False
-                
-                split = self.conf.run.double_depth_network.split
-                self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split]))
-                self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:split]))
-                self.concat_layer = torch.nn.Conv2d(
-                    1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
-                )
-                torch.nn.init.xavier_uniform_(self.concat_layer.weight)
-                self.model = torch.nn.Sequential(*(list(self.model.children())[split:])) 
-                
-            else:
-                self.rgb_model = RGB(conf)
-                self.depth_model = DepthFake(conf)
-
-
-                #remove rgb input and take only depth input in the first layer
+            if in_features == 1:
                 weights = self.depth_model.model.conv1.weight
-                kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                stride = tuple(self.depth_model.model.conv1.stride)
+                kernel_size = tuple(self.model.conv1.kernel_size)
+                stride = tuple(self.model.conv1.stride)
+                out_features = weights.shape[0]
+                new_features = torch.nn.Conv2d(
+                    1, out_features, kernel_size=kernel_size, stride=stride
+                )
+                torch.nn.init.xavier_uniform_(new_features.weight)
+                self.depth_model.model.conv1 = new_features
+
+            self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split]))
+            self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:split]))
+
+            if split == -1
+                self.final_layer = torch.nn.Linear(in_features = 4096, out_features = 2, bias = True)
+                torch.nn.init.xavier_uniform_(self.fc_layer.weight)
+            else:
+                self.final_layer = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:])))
+                self.fuse = self.sum
+            self.model = None
+
+        elif self.conf.model.backbone == "mobilenet_v2":
+            self.model = timm.create_model(
+                "mobilenetv2_100", pretrained=True, num_classes=self.num_classes
+            )
+
+            self.rgb_model = RGB(conf)
+            self.depth_model = RGB(conf)
+            
+            if in_features == 1:
+                weights = self.model.conv_stem.weight
+                kernel_size = tuple(self.model.conv_stem.kernel_size)
+                stride = tuple(self.model.conv_stem.stride)
                 out_features = weights.shape[0]
                 new_features = torch.nn.Conv2d(
                     in_features, out_features, kernel_size=kernel_size, stride=stride
                 )
-                new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                self.depth_model.model.conv1 = new_features
 
-                # split = self.conf.run.double_depth_network.split
+                torch.nn.init.xavier_uniform_(new_features.weight)
+                self.depth_model.model.conv_stem = new_features
 
-                # n = sum(1 for _ in self.rgb_model.model.parameters())
-                # half = int(n/2)
+            self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:-1]))
+            self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:-1]))
 
-                # for i, param in enumerate(self.rgb_model.model.parameters()):
-                #     if i > half:
-                #         break
-                #     param.requires_grad = False
-                # for i, param in enumerate(self.depth_model.model.parameters()):
-                #     if i > half:
-                #         break
-                #     param.requires_grad = False
-                self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:-1]))
-                self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:-1]))
-                # self.concat_layer = torch.nn.Conv2d(
-                #     1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
-                # )
-
-                self.theta = torch.nn.Parameter(torch.ones(2048)*0.5)
-                self.ones = torch.ones(2048).to('cuda')
-
-                self.fc_layer = torch.nn.Linear(in_features = 2048, out_features = 2, bias = True)
-                # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
-                torch.nn.init.xavier_uniform_(self.fc_layer.weight)
-                # self.model = torch.nn.Sequential(*(list(self.model.children())[split:])) 
-                self.model = None
+            self.final_layer = torch.nn.Linear(in_features = 2560, out_features = 2, bias = True)
+            torch.nn.init.xavier_uniform_(self.fc_layer.weight)
 
 
         else:
@@ -134,14 +96,9 @@ class DoubleDepthFake(pl.LightningModule):
         x_rgb = self.rgb_model(x[:,:3,:,:])
         x_depth = self.depth_model(x[:,3:,:,:])
         
-        x = self.theta * x_rgb + (self.ones-self.theta)*x_depth
+        x = self.fuse(x_rgb, x_depth)
 
-        # x = torch.cat((x_rgb, x_depth), dim = 1)
-        # x = self.concat_layer(x)
-        
-        # x = self.model(x)
-
-        x = self.fc_layer(x)
+        x = self.final_layer(x)
 
         return x
 
@@ -193,3 +150,9 @@ class DoubleDepthFake(pl.LightningModule):
                 "monitor": "val_loss",
             },
         }
+    
+    def concat(self, x, y):
+        return torch.cat((x, y), dim = 1)
+    
+    def sum(self, x, y):
+        return x + y

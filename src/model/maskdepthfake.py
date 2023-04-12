@@ -20,105 +20,98 @@ class MaskDepthFake(pl.LightningModule):
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
         in_features = 1
-        if self.conf.data.use_hha:
+        if self.conf.data.depth_type  == 'hha':
             in_features = 3
 
+        self.classify_on = self.conf.model.classify_on
+        
 
         if self.conf.model.backbone == "xception":
             self.model = timm.create_model(
                 "xception", pretrained=True, num_classes=self.num_classes
             )
 
-            #load pretrained weights
-            if self.conf.run.double_depth_network.use_pretain:
-                print("not implemented")                
-                # self.rgb_model = RGB(conf)
-                # self.depth_model = RGB(conf)
-                
-                # base_path = Path(Path(__file__).parent, "../../")
-                # rgb_checkpoint = Path(
-                #     base_path,
-                #     self.conf.run.double_depth_network.rgb_checkpoint,
-                # )
-                # depth_checkpoint = Path(
-                #     base_path,
-                #     self.conf.run.double_depth_network.depth_checkpoint,
-                # )
-                
-                # #load weights for rgb part
-                # self.rgb_model = self.rgb_model.load_from_checkpoint(checkpoint_path=rgb_checkpoint)
+            self.rgb_model = RGB(conf)
+            self.depth_model = RGB(conf)
 
-
-                # self.depth_model = self.depth_model.load_from_checkpoint(checkpoint_path=depth_checkpoint)
-
-                # #remove rgb input and take only depth input in the first layer
-                # # weights = self.depth_model.model.conv1.weight
-                # # kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
-                # # stride = tuple(self.depth_model.model.conv1.stride)
-                # # out_features = weights.shape[0]
-                # # new_features = torch.nn.Conv2d(
-                # #     in_features, out_features, kernel_size=kernel_size, stride=stride
-                # # )
-                # # new_features.weight = torch.nn.Parameter(weights.data[:, 3:, :, :])
-                # # self.depth_model.model.conv1 = new_features
-
-                # #freeze the models
-                # for param in self.rgb_model.model.parameters():
-                #     param.requires_grad = False
-                # for param in self.depth_model.model.parameters():
-                #     param.requires_grad = False
-                
-                # split = self.conf.run.double_depth_network.split
-                # self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split]))
-                # self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:split]))
-                # self.concat_layer = torch.nn.Conv2d(
-                #     1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
-                # )
-                # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
-                # self.model = torch.nn.Sequential(*(list(self.model.children())[split:])) 
-                
-            else:
-                self.rgb_model = RGB(conf)
-                self.depth_model = DepthFake(conf)
-
-
+            if in_features == 1:
                 #remove rgb input and take only depth input in the first layer
                 weights = self.depth_model.model.conv1.weight
                 kernel_size = tuple(self.depth_model.model.conv1.kernel_size)
                 stride = tuple(self.depth_model.model.conv1.stride)
                 out_features = weights.shape[0]
                 new_features = torch.nn.Conv2d(
-                    in_features, out_features, kernel_size=kernel_size, stride=stride
+                    1, out_features, kernel_size=kernel_size, stride=stride
                 )
                 torch.nn.init.xavier_uniform_(new_features.weight)
                 self.depth_model.model.conv1 = new_features
 
 
+            split = self.conf.model.split
+            self.rgb_model = copy.deepcopy(torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split])))
+            self.depth_model = copy.deepcopy(torch.nn.Sequential(*(list(self.depth_model.model.children())[:split])))
 
-                # split = self.conf.run.double_depth_network.split
-                split = 9
-                self.rgb_model = copy.deepcopy(torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split])))
-                self.depth_model = copy.deepcopy(torch.nn.Sequential(*(list(self.depth_model.model.children())[:split])))
-
-
-                # self.concat_layer = torch.nn.Conv2d(
-                #     1456, 728, kernel_size=(1,1), stride=(1,1), padding = (0,0)
-                # )
-
-                # self.theta = torch.nn.Parameter(torch.zeros(728))
-                # self.ones = torch.ones(2048).to('cuda')
-                
-
-
-                # self.fc_layer = torch.nn.Linear(in_features = 2048, out_features = 2, bias = True)
-                # torch.nn.init.xavier_uniform_(self.concat_layer.weight)
-                # torch.nn.init.xavier_uniform_(self.fc_layer.weight)
-                self.rgb_model_final = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:-1]))) 
-                self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:-1]))) 
+            if self.classify_on == 'rgbd':
+                self.rgb_model_final = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:-1])))
+                self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:-1])))
                 self.fc_layer = torch.nn.Linear(in_features = 4096, out_features = 2, bias = True)
                 torch.nn.init.xavier_uniform_(self.fc_layer.weight)
-                # self.model = None
+            else:
+                self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:])))
 
+            self.model = None                
+
+        elif self.conf.model.backbone == "mobilenet_v2":
+            self.model = timm.create_model(
+                "mobilenetv2_100", pretrained=True, num_classes=self.num_classes
+            )
+
+            self.rgb_model = RGB(conf)
+            self.depth_model = RGB(conf)
+            
+            if in_features == 1:
+                weights = self.depth_model.model.conv_stem.weight
+                kernel_size = tuple(self.depth_model.model.conv_stem.kernel_size)
+                stride = tuple(self.depth_model.model.conv_stem.stride)
+                out_features = weights.shape[0]
+                new_features = torch.nn.Conv2d(
+                    1, out_features, kernel_size=kernel_size, stride=stride
+                )
+
+                torch.nn.init.xavier_uniform_(new_features.weight)
+                self.depth_model.model.conv_stem = new_features
+
+            rgb_tmp = list((list(self.rgb_model.model.children())[2]).children())
+            rgb_layer = list(self.rgb_model.model.children())[:2]
+            rgb_layer.extend(rgb_tmp[:4])
+
+            depth_tmp = list((list(self.depth_model.model.children())[2]).children())
+            depth_layer = list(self.depth_model.model.children())[:2]
+            depth_layer.extend(depth_tmp[:4])
+
+            self.rgb_model = copy.deepcopy(torch.nn.Sequential(*rgb_layer))
+            self.depth_model = copy.deepcopy(torch.nn.Sequential(*depth_layer))
+
+            
+            if self.classify_on == 'rgbd':
+
+                rgb_layer = rgb_tmp[4:] 
+                rgb_layer.extend(list(self.model.children())[3:-1])
+                
+                depth_layer = depth_tmp[4:]
+                depth_layer.extend(list(self.model.children())[3:-1])
+
+                self.rgb_model_final = copy.deepcopy(torch.nn.Sequential(*rgb_layer)) 
+                
+                self.fc_layer = torch.nn.Linear(in_features = 2560, out_features = 2, bias = True)
+                torch.nn.init.xavier_uniform_(self.fc_layer.weight)
+
+            else:
+                depth_layer.extend(list(self.model.children())[3:])
+
+            self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*depth_layer)) 
+
+            self.model = None
 
         else:
             raise NotImplementedError
@@ -136,13 +129,14 @@ class MaskDepthFake(pl.LightningModule):
         x_mask = x_rgb.gt(0).to(torch.float32)
 
         x_depth = x_mask * x_depth
-        
-        x_rgb = self.rgb_model_final(x_rgb)
-        x_depth = self.depth_model_final(x_depth)
 
-        x = torch.cat((x_rgb, x_depth), dim = 1)
+        x = self.depth_model_final(x_depth)
 
-        x = self.fc_layer(x)
+        if self.classify_on == 'rgbd': 
+
+            x_rgb = self.rgb_model_final(x_rgb)
+            x = torch.cat((x_rgb, x), dim = 1)
+            x = self.fc_layer(x)
 
         return x
 

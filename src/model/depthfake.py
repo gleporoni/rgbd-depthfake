@@ -15,8 +15,12 @@ class DepthFake(pl.LightningModule):
         self.conf = conf
         self.num_classes = self.conf.data.num_classes
         in_features = 4
-        if self.conf.data.use_hha:
+        if self.conf.data.input_type == 'rgbd' and self.conf.data.depth_type  == 'hha':
             in_features = 6
+        elif self.conf.data.input_type == 'd':
+            in_features = 1
+            if self.conf.data.depth_type  == 'hha':
+                in_features = 3
 
         if self.conf.model.backbone == "resnet50":
             # init a pretrained resnet
@@ -34,7 +38,8 @@ class DepthFake(pl.LightningModule):
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            if in_features > 2:
+                new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -54,7 +59,8 @@ class DepthFake(pl.LightningModule):
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            if in_features > 2:
+                new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -74,7 +80,8 @@ class DepthFake(pl.LightningModule):
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            if in_features > 2:
+                new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -97,7 +104,8 @@ class DepthFake(pl.LightningModule):
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            if in_features > 2:
+                new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -112,12 +120,13 @@ class DepthFake(pl.LightningModule):
             stride = tuple(self.model.conv1.stride)
             out_features = weights.shape[0]
             new_features = torch.nn.Conv2d(
-                1, out_features, kernel_size=kernel_size, stride=stride
+                in_features, out_features, kernel_size=kernel_size, stride=stride
             )
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            # new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            if in_features > 2:
+                new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -137,7 +146,8 @@ class DepthFake(pl.LightningModule):
             # For Depth-channel weight should randomly initialized with Gaussian
             torch.nn.init.xavier_uniform_(new_features.weight)
             # For RGB it should be copied from pretrained weights
-            new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
+            if in_features > 2:
+                new_features.weight.data[:, :3, :, :] = torch.nn.Parameter(weights)
             # if self.conf.data.use_hha:
                 # new_features.weight.data[:, 3:, :, :] = torch.nn.Parameter(weights)
             # Update the pre-trained weights of the first layer
@@ -152,7 +162,7 @@ class DepthFake(pl.LightningModule):
         self.save_hyperparameters(conf)
 
     def forward(self, x) -> dict:
-        x = self.model(x[:,3:,:,:])
+        x = self.model(x)
         return x
 
     def training_step(self, batch: dict, batch_idx: int) -> torch.Tensor:

@@ -17,7 +17,7 @@ import copy
 
 
 
-class DoubleDepthFakeB(pl.LightningModule):
+class DepthFakeRocket(pl.LightningModule):
     def __init__(self, conf) -> None:
         super().__init__()
         self.conf = conf

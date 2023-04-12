@@ -29,8 +29,8 @@ def test(conf: omegaconf.DictConfig) -> None:
     # pl.seed_everything(conf.run.seed)
 
     # data module declaration
-    # data = FaceForensicsPlusPlus(conf)
-    # data.setup(stage="test")
+    data = FaceForensicsPlusPlus(conf)
+    data.setup(stage="test")
 
     # main module declaration
     if conf.model.model_name in (
@@ -53,6 +53,7 @@ def test(conf: omegaconf.DictConfig) -> None:
         model = DepthFake(conf)
     elif conf.model.model_name in (
         "depth_double_xception",
+        "depth_double_mobilenet",
     ):
         model = DoubleDepthFake(conf)
     elif conf.model.model_name in (
@@ -60,7 +61,8 @@ def test(conf: omegaconf.DictConfig) -> None:
     ):
         model = DoubleDepthFakeB(conf)
     elif conf.model.model_name in (
-        "depth_mask",
+        "depth_mask_xception",
+        "depth_mask_mobilenet",
     ):
         model = MaskDepthFake(conf)
     elif conf.model.model_name in (
@@ -70,36 +72,34 @@ def test(conf: omegaconf.DictConfig) -> None:
     else:
         raise NotImplementedError
 
-    # tmp = next(iter(data.train_dataloader()))
-    # inputs = tmp['image']
-    # classes = tmp['label']
+    # trainer
+    trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
+    if conf.run.experiment.check_all:
+        check_list = [conf.run.experiment.checkpoint_file_acc,
+                    conf.run.experiment.checkpoint_file_loss,
+                    conf.run.experiment.checkpoint_file_last
+                    ]
+        for check in check_list:
+            base_path = Path(Path(__file__).parent, "../")
+            checkpoint_path = Path(
+                base_path,
+                check,
+            )
+            model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
 
-    # print(inputs.shape)
-    # print("-------")
+            # module test
+            trainer.test(model, datamodule=data)
+    else:
+        # Load a pretrained model from a checkpoint
+        base_path = Path(Path(__file__).parent, "../")
+        checkpoint_path = Path(
+            base_path,
+            conf.run.experiment.checkpoint_file,
+        )
+        model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
 
-    # model(inputs)
-
-    model = model.load_from_checkpoint(checkpoint_path="/workdir/weights/depth_double_mask.ckpt" )
-
-
-
-    # a = model.rgb_model(inputs[:2,:3,:,:])
-    # print(a)
-    # print(a.gt(0).to(torch.float32))
-
-    # # trainer
-    # trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
-
-    # # Load a pretrained model from a checkpoint
-    # base_path = Path(Path(__file__).parent, "../")
-    # checkpoint_path = Path(
-    #     base_path,
-    #     conf.run.experiment.checkpoint_file,
-    # )
-    # model = model.load_from_checkpoint(checkpoint_path="/workdir/experiments/depth_double_xception/2023-03-13/08-49-04/experiments/depth_double_xception/epoch=1-step=1260.ckpt" )
-
-    # module test
-    # trainer.test(model, datamodule=data)
+        # module test
+        trainer.test(model, datamodule=data)
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

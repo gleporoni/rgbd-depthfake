@@ -1,0 +1,8 @@
+model_name: "depth_mask_mobilenet"
+
+backbone: "mobilenet_v2"
+
+learning_rate: 1e-4
+weight_decay: 1e-5
+
+classify_on: 'rgbd' # 'd' only on depth, 'rgbd' concat rgb and depth

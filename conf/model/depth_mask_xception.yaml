@@ -1,0 +1,10 @@
+model_name: "depth_mask_xception"
+
+backbone: "xception"
+
+learning_rate: 1e-4
+weight_decay: 1e-5
+
+split: 9 # 9 for middle flow, 17 for exit flow
+
+classify_on: 'rgbd' # 'd' only on depth, 'rgbd' concat rgb and depth

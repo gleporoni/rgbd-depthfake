@@ -10,13 +10,13 @@ pl_trainer:
   
 
 experiment:
-  checkpoint_file: weights/depth_double_xception_middle/epoch=0-step=630.ckpt
+  checkpoint_file: weights_2/depth_mask_xception/2023-04-11/15-01-12/experiments/accuracy/depth_mask_xception/epoch=26-step=17010.ckpt
 
-double_depth_network:
-  use_pretain: False
-  rgb_checkpoint: weights/rgb_xception/epoch=0-step=637.ckpt
-  depth_checkpoint: weights/depth_xception/epoch=0-step=630.ckpt
-  split: 9 #9 for middle flow, 17 for exit flow
+  check_all: False
+  checkpoint_file_acc: weights_2/depth_mask_mobilenet/2023-04-11/15-07-22/experiments/accuracy/depth_mask_mobilenet/epoch=28-step=18270.ckpt
+  checkpoint_file_loss: weights_2/depth_mask_mobilenet/2023-04-11/15-07-22/experiments/loss/depth_mask_mobilenet/epoch=2-step=1890.ckpt
+  checkpoint_file_last: weights_2/depth_mask_mobilenet/2023-04-11/15-07-22/experiments/last/depth_mask_mobilenet
+
 
 ####################################################################################################
 ## #                               Checkpoint                                      #     Model    ##

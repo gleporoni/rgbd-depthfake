@@ -13,10 +13,11 @@ attacks: ["Deepfakes"]
 #attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
 use_attacks: True
 use_depth: True
-use_hha: False
-use_mixed: True
+depth_type: "depth" # 'depth' or 'hha' or 'None'
+input_type: "rgbd" # 'rgb' or 'rgbd' or 'd' 
 
-batch_size: 16
+
+batch_size: 32
 num_workers: 8
 
 mean: [0.485,0.456,0.406]

@@ -15,11 +15,10 @@ from model.rgb import RGB
 from model.depthfake import DepthFake
 from model.doubledepthfake import DoubleDepthFake
 from model.attentiondepthfake import AttentionDepthFake
-from torchvision.utils import save_image
-from model.doubledepthfakeb import DoubleDepthFakeB
+from model.depthfakerocket import DepthFakeRocket
 from model.maskdepthfake import MaskDepthFake
-from model.doubledepthfakemask import DoubleDepthFakeMask
-
+from torchvision.utils import save_image
+import os
 
 
 
@@ -28,6 +27,8 @@ log = logging.getLogger(__name__)
 
 
 def train(conf: omegaconf.DictConfig) -> None:
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = conf.run.cuda_device
 
     # reproducibility
     pl.seed_everything(conf.run.seed)
@@ -67,6 +68,7 @@ def train(conf: omegaconf.DictConfig) -> None:
         model = DepthFake(conf)
     elif conf.model.model_name in (
         "depth_double_xception",
+        "depth_double_mobilenet",
     ):
         model = DoubleDepthFake(conf)
     elif conf.model.model_name in (
@@ -74,17 +76,14 @@ def train(conf: omegaconf.DictConfig) -> None:
     ):
         model = AttentionDepthFake(conf)    
     elif conf.model.model_name in (
-        "depth_double_xceptionb",
+        "depth_rocketnet",
     ):
-        model = DoubleDepthFakeB(conf)
+        model = DepthFakeRocket(conf)
     elif conf.model.model_name in (
-        "depth_mask",
+        "depth_mask_xception",
+        "depth_mask_mobilenet",
     ):
         model = MaskDepthFake(conf)
-    elif conf.model.model_name in (
-        "depth_double_xception_mask",
-    ):
-        model = DoubleDepthFakeMask(conf)
     else:
         raise NotImplementedError
 
@@ -104,11 +103,18 @@ def train(conf: omegaconf.DictConfig) -> None:
     # callbacks declaration
     callbacks_store = []
 
-    if conf.run.model_checkpoint_callback is not None:
-        model_checkpoint_callback: ModelCheckpoint = hydra.utils.instantiate(
-            conf.run.model_checkpoint_callback
+    if conf.run.model_checkpoint_callback_loss is not None:
+        model_checkpoint_callback_loss: ModelCheckpoint = hydra.utils.instantiate(
+            conf.run.model_checkpoint_callback_loss
         )
-        callbacks_store.append(model_checkpoint_callback)
+        callbacks_store.append(model_checkpoint_callback_loss)
+
+    if conf.run.model_checkpoint_callback_acc is not None:
+        model_checkpoint_callback_acc: ModelCheckpoint = hydra.utils.instantiate(
+            conf.run.model_checkpoint_callback_acc
+        )
+
+        callbacks_store.append(model_checkpoint_callback_acc)
 
     # trainer
     trainer: Trainer = hydra.utils.instantiate(
@@ -123,7 +129,7 @@ def train(conf: omegaconf.DictConfig) -> None:
     log.info(f"Test data: {len(data.test_data)}")
     trainer.test(model, datamodule=data)
 
-    trainer.save_checkpoint(filepath="/workdir/weights/depth_mask.ckpt", weights_only = False)
+    trainer.save_checkpoint(filepath=conf.run.path_last, weights_only = False)
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

@@ -39,9 +39,9 @@ class FaceForensics(Dataset):
         self.compression_level = self.conf.data.compression_level
         self.real = self.conf.data.real
         self.attacks = self.conf.data.attacks
+        self.depth_type = self.conf.depth_type
         self.use_depth = self.conf.data.use_depth
-        self.use_hha = self.conf.data.use_hha
-        self.use_mixed = self.conf.data.use_mixed
+        self.input_type = self.conf.data.input_type
 
         # Val and test data
         self.val_videos = VAL_VIDEOS
@@ -69,9 +69,9 @@ class FaceForensics(Dataset):
         # Load the image and apply transformations
         image = Image.open(self.dataset.images[idx]).convert("RGB")
 
-        if self.use_mixed:
+        if self.input_type == 'rgbd':
             # Load depth
-            if self.use_hha:
+            if self.depth_type == 'hha':
                 image = np.array(image)
                 tmp = str(self.dataset.depths[idx]).split('Depth-Faces')
                 path = tmp[0] + 'HHA-Faces' + tmp[1].split('.')[0]+'.png'
@@ -82,22 +82,34 @@ class FaceForensics(Dataset):
                     (image[:, :, 0], image[:, :, 1], image[:, :, 2], hha[:, :, 0], hha[:, :, 1], hha[:, :, 2]), axis=-1
                 )
                 
-            elif self.use_depth:
+            elif self.depth_type == 'depth':
                 depth = np.load(self.dataset.depths[idx], allow_pickle=True)
                 image = np.array(image)
                 image = np.stack(
                     (image[:, :, 0], image[:, :, 1], image[:, :, 2], depth), axis=-1
                 )
-        else:
+            else:
+                raise NotImplementedError
+
+        elif self.input_type == 'd'::
             # Load depth
-            if self.use_hha:
+            if self.depth_type == 'hha':
                 tmp = str(self.dataset.depths[idx]).split('Depth-Faces')
                 path = tmp[0] + 'HHA-Faces' + tmp[1].split('.')[0]+'.png'
                 hha = Image.open(path).convert("RGB")
                 image = np.array(hha)
-
-            elif self.use_depth:
+    
+            elif self.depth_type == 'depth':
                 image = np.load(self.dataset.depths[idx], allow_pickle=True)
+            else:
+                raise NotImplementedError
+            
+        elif self.input_type == 'rgb':
+            pass
+            #do nothing
+        else:
+            raise NotImplementedError
+
 
         if self.transform:
             image = self.transform(image)

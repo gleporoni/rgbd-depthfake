@@ -17,7 +17,7 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
         transform = (
             [transforms.ToTensor()]
-            if self.conf.data.use_depth or self.conf.data.use_hha
+            if self.conf.data.use_depth
             else [
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.conf.data.mean, std=self.conf.data.std),

@@ -48,9 +48,9 @@ class DoubleDepthFake(pl.LightningModule):
             self.rgb_model = torch.nn.Sequential(*(list(self.rgb_model.model.children())[:split]))
             self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:split]))
 
-            if split == -1
+            if split == -1:
                 self.final_layer = torch.nn.Linear(in_features = 4096, out_features = 2, bias = True)
-                torch.nn.init.xavier_uniform_(self.fc_layer.weight)
+                torch.nn.init.xavier_uniform_(self.final_layer.weight)
             else:
                 self.final_layer = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[split:])))
                 self.fuse = self.sum
@@ -80,7 +80,7 @@ class DoubleDepthFake(pl.LightningModule):
             self.depth_model = torch.nn.Sequential(*(list(self.depth_model.model.children())[:-1]))
 
             self.final_layer = torch.nn.Linear(in_features = 2560, out_features = 2, bias = True)
-            torch.nn.init.xavier_uniform_(self.fc_layer.weight)
+            torch.nn.init.xavier_uniform_(self.final_layer.weight)
 
 
         else:

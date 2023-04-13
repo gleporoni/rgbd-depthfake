@@ -102,14 +102,16 @@ class MaskDepthFake(pl.LightningModule):
                 depth_layer.extend(list(self.model.children())[3:-1])
 
                 self.rgb_model_final = copy.deepcopy(torch.nn.Sequential(*rgb_layer)) 
-                
+                self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*depth_layer)) 
+
                 self.fc_layer = torch.nn.Linear(in_features = 2560, out_features = 2, bias = True)
                 torch.nn.init.xavier_uniform_(self.fc_layer.weight)
 
             else:
+                depth_layer = depth_tmp[4:]
                 depth_layer.extend(list(self.model.children())[3:])
+                self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*depth_layer)) 
 
-            self.depth_model_final = copy.deepcopy(torch.nn.Sequential(*depth_layer)) 
 
             self.model = None
 

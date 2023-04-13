@@ -11,11 +11,8 @@ from data.data_loader import FaceForensicsPlusPlus
 from model.rgb import RGB
 from model.depthfake import DepthFake
 from model.doubledepthfake import DoubleDepthFake
-from model.doubledepthfakeb import DoubleDepthFakeB
+from model.depthfakerocket import DepthFakeRocket
 from model.maskdepthfake import MaskDepthFake
-from model.doubledepthfakemask import DoubleDepthFakeMask
-
-
 import torch
 
 
@@ -26,7 +23,7 @@ log = logging.getLogger(__name__)
 def test(conf: omegaconf.DictConfig) -> None:
 
     # # reproducibility
-    # pl.seed_everything(conf.run.seed)
+    pl.seed_everything(conf.run.seed)
 
     # data module declaration
     data = FaceForensicsPlusPlus(conf)
@@ -57,18 +54,10 @@ def test(conf: omegaconf.DictConfig) -> None:
     ):
         model = DoubleDepthFake(conf)
     elif conf.model.model_name in (
-        "depth_double_xceptionb",
-    ):
-        model = DoubleDepthFakeB(conf)
-    elif conf.model.model_name in (
         "depth_mask_xception",
         "depth_mask_mobilenet",
     ):
         model = MaskDepthFake(conf)
-    elif conf.model.model_name in (
-        "depth_double_xception_mask",
-    ):
-        model = DoubleDepthFakeMask(conf)
     else:
         raise NotImplementedError
 
@@ -85,7 +74,17 @@ def test(conf: omegaconf.DictConfig) -> None:
                 base_path,
                 check,
             )
-            model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
+            try:
+                model = model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=False)
+            except:
+                checkpoint = torch.load(checkpoint_path)
+                new_weights = model.state_dict()
+                old_weights = list(checkpoint['state_dict'].items())
+                i=0
+                for k, _ in new_weights.items():
+                    new_weights[k] = old_weights[i][1]
+                    i += 1
+                model.load_state_dict(new_weights)
 
             # module test
             trainer.test(model, datamodule=data)
@@ -96,7 +95,17 @@ def test(conf: omegaconf.DictConfig) -> None:
             base_path,
             conf.run.experiment.checkpoint_file,
         )
-        model = model.load_from_checkpoint(checkpoint_path=checkpoint_path)
+        try:
+            model = model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=False)
+        except:
+            checkpoint = torch.load(checkpoint_path)
+            new_weights = model.state_dict()
+            old_weights = list(checkpoint['state_dict'].items())
+            i=0
+            for k, _ in new_weights.items():
+                new_weights[k] = old_weights[i][1]
+                i += 1
+            model.load_state_dict(new_weights)
 
         # module test
         trainer.test(model, datamodule=data)

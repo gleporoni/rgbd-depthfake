@@ -39,7 +39,7 @@ class FaceForensics(Dataset):
         self.compression_level = self.conf.data.compression_level
         self.real = self.conf.data.real
         self.attacks = self.conf.data.attacks
-        self.depth_type = self.conf.depth_type
+        self.depth_type = self.conf.data.depth_type
         self.use_depth = self.conf.data.use_depth
         self.input_type = self.conf.data.input_type
 
@@ -91,7 +91,7 @@ class FaceForensics(Dataset):
             else:
                 raise NotImplementedError
 
-        elif self.input_type == 'd'::
+        elif self.input_type == 'd':
             # Load depth
             if self.depth_type == 'hha':
                 tmp = str(self.dataset.depths[idx]).split('Depth-Faces')

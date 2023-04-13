@@ -10,7 +10,7 @@ pl_trainer:
   
 
 experiment:
-  checkpoint_file: weights_2/depth_mask_xception/2023-04-11/15-01-12/experiments/accuracy/depth_mask_xception/epoch=26-step=17010.ckpt
+  checkpoint_file: weights_2/rgb_mobilenet/2023-04-10/23-13-19/experiments/accuracy/rgb_mobilenet/epoch=16-step=10829.ckpt
 
   check_all: False
   checkpoint_file_acc: weights_2/depth_mask_mobilenet/2023-04-11/15-07-22/experiments/accuracy/depth_mask_mobilenet/epoch=28-step=18270.ckpt

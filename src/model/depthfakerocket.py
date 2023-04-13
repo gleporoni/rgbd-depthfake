@@ -89,7 +89,7 @@ class DepthFakeRocket(pl.LightningModule):
             self.rgb_conv_block_4 = copy.deepcopy(list(tmp_model[9].children())[0])
             self.depth_conv_block_4 = copy.deepcopy(list(tmp_model[9].children())[0])
 
-            tmp_conv = torch.nn.Conv2d(728, 728, kernel_size=3, stride=1, padding=1 bias=False)
+            tmp_conv = torch.nn.Conv2d(728, 728, kernel_size=3, stride=1, padding=1, bias=False)
             tmp_batchnorm = torch.nn.BatchNorm2d(728, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
             torch.nn.init.xavier_uniform_(tmp_conv.weight)
 
@@ -313,7 +313,7 @@ class DepthFakeRocket(pl.LightningModule):
         stride = tuple(layer[0].stride)
         out_features = weights.shape[0]
         new_features = torch.nn.Conv2d(
-            out_features, out_features, kernel_size=3, stride=1, padding=1 bias=False
+            out_features, out_features, kernel_size=3, stride=1, padding=1, bias=False
         )
         torch.nn.init.xavier_uniform_(new_features.weight)
         return new_features

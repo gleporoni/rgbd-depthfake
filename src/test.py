@@ -14,6 +14,7 @@ from model.doubledepthfake import DoubleDepthFake
 from model.depthfakerocket import DepthFakeRocket
 from model.maskdepthfake import MaskDepthFake
 import torch
+import os
 
 
 
@@ -21,6 +22,8 @@ log = logging.getLogger(__name__)
 
 
 def test(conf: omegaconf.DictConfig) -> None:
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = conf.run.cuda_device
 
     # # reproducibility
     pl.seed_everything(conf.run.seed)

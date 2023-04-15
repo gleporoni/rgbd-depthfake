@@ -1,6 +1,8 @@
 # reproducibility
 seed: 42
 
+cuda_device: '0'
+
 # pl_trainer
 pl_trainer:
   _target_: pytorch_lightning.Trainer

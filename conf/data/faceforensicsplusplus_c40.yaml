@@ -15,6 +15,7 @@ use_attacks: True
 use_depth: False
 depth_type: 'None'
 input_type: 'rgb' # rgb - rgbd - d 
+augmentation: False
 
 
 batch_size: 32

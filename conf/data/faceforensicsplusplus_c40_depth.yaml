@@ -3,9 +3,9 @@ dataset_name: "faceforensics"
 # rgb_path: "subset/Faceforensics/RGB-Faces"
 # depth_path: "subset/Faceforensics/Depth-Faces"
 
-rgb_path: "/media/subsetSSD/Faceforensics/RGB-Faces"
-depth_path: "/media/subsetSSD/Faceforensics/Depth-Faces"
-hha_path: "/media/subsetSSD/Faceforensics/HHA-Faces"
+rgb_path: "/workdir/subsetSSD/Faceforensics/RGB-Faces"
+depth_path: "/workdir/subsetSSD/Faceforensics/Depth-Faces"
+hha_path: "/workdir/subsetSSD/Faceforensics/HHA-Faces"
 
 compression_level: ['c40'] # ['raw', 'c23', 'c40']
 real: ["youtube"]
@@ -15,6 +15,7 @@ use_attacks: True
 use_depth: True
 depth_type: "depth" # 'depth' or 'hha' or 'None'
 input_type: "rgbd" # 'rgb' or 'rgbd' or 'd' 
+augmentation: True
 
 
 batch_size: 32

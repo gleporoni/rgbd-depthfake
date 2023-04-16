@@ -84,8 +84,8 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
         if self.conf.data.augmentation and self.trainer.training:
-            for i in range(self.batch_size):
-                if random() < 0.5:
+            for i in range(batch['image'].shape[0]):
+                if random() < 0.25:
                     batch['image'][i] = self.augmentation(batch['image'][i])
         return batch
 
@@ -117,4 +117,4 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
 
 
-
+#ìprova

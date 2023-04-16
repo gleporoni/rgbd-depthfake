@@ -10,7 +10,7 @@ pl_trainer:
   # devices: [6]
   max_epochs: 30
   # auto_scale_batch_size: 'power'
-  accumulate_grad_batches: 12
+  accumulate_grad_batches: 6
   # gradient_clip_val: 10.0
   # val_check_interval: 1.0  # you can specify an int "n" here => validation every "n" steps
   # uncomment the lines below for training with mixed precision

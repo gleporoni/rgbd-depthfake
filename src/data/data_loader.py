@@ -113,8 +113,3 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             compressed_tensor[j, :, :] = decompressed_data.squeeze(0)
 
         return compressed_tensor
-
-
-
-
-#ìprova

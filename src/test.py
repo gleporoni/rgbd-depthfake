@@ -61,6 +61,10 @@ def test(conf: omegaconf.DictConfig) -> None:
         "depth_mask_mobilenet",
     ):
         model = MaskDepthFake(conf)
+    elif conf.model.model_name in (
+        "depth_rocketnet",
+    ):
+        model = DepthFakeRocket(conf)
     else:
         raise NotImplementedError
 

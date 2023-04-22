@@ -121,6 +121,26 @@ def train(conf: omegaconf.DictConfig) -> None:
         conf.run.pl_trainer, callbacks=callbacks_store, logger=loggers
     )
 
+    # load pretrained model 
+    if conf.run.experiment.pretrain:
+        base_path = Path(Path(__file__).parent, "../")
+        checkpoint_path = Path(
+            base_path,
+            conf.run.experiment.checkpoint_file,
+        )
+        try:
+            model = model.load_from_checkpoint(checkpoint_path=checkpoint_path, strict=False)
+        except:
+            checkpoint = torch.load(checkpoint_path)
+            new_weights = model.state_dict()
+            old_weights = list(checkpoint['state_dict'].items())
+            i=0
+            for k, _ in new_weights.items():
+                new_weights[k] = old_weights[i][1]
+                i += 1
+            model.load_state_dict(new_weights)
+
+
     # module fit
     trainer.fit(model, datamodule=data)
 

@@ -28,13 +28,28 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
         self.transform = transforms.Compose(transform)
         self.batch_size = self.conf.data.batch_size
-        self.augmentation = transforms.Compose(
+        self.augmentation0 = transforms.Compose(
             [
                 transforms.Lambda(self._compress_tensor),
                 transforms.ConvertImageDtype(dtype=torch.float32),
                 transforms.GaussianBlur(kernel_size=5, sigma = (4.0, 8.0))
             ]
         )
+
+        self.agumentation3 = transforms.Compose(
+            [
+                transforms.Lambda(self._compress_tensor),
+                transforms.ConvertImageDtype(dtype=torch.float32),
+                transforms.GaussianBlur(kernel_size=5, sigma = (4.0, 8.0)),
+                transforms.Lambda(self._gaussian_noise),
+                transforms.Resize(size=(64, 64))
+                transforms.Resize(size=(224, 224))
+                transforms.RandomAffine(degrees = 0, translate = (20, 20)),
+                transforms.ColorJitter(brightness=(0, 0.5), contrast = (0, 0.5)),
+                transforms.Lambda(self._cutout)
+            ]
+        )
+
         self.quality = 75
 
 
@@ -83,12 +98,20 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
+        epoch = self.trainer.current_epoch
         if self.conf.data.augmentation and self.trainer.training:
             for i in range(batch['image'].shape[0]):
-                if random() < 0.25:
+                if random() < 0.10:
                     batch['image'][i] = self.augmentation(batch['image'][i])
         return batch
 
+    # def on_after_batch_transfer(self, batch, dataloader_idx):
+    #     epoch = self.trainer.current_epoch
+    #     if self.conf.data.augmentation and self.trainer.training:
+    #         for i in range(batch['image'].shape[0]):
+    #             if random() < 0.50:
+    #                 batch['image'][i] = self.augmentation(batch['image'][i])
+    #     return batch
 
     def _compress_tensor(self, tensor) -> torch.Tensor:
         # Check input shape
@@ -113,3 +136,32 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             compressed_tensor[j, :, :] = decompressed_data.squeeze(0)
 
         return compressed_tensor
+    
+    def _gaussian_noise(self, tensor) -> torch.Tensor:
+        return tensor + torch.normal(0, random.sample([0.05, 0.07], k=1)[0], size=tensor.shape)
+
+    def _cutout(self, tensor) -> torch.Tensor:
+        h = tensor.size(1)
+        w = tensor.size(2)
+
+        mask = np.ones((h, w), np.float32)
+
+        length = random.sample([20, 40, 60], k=1)[0]
+        n_holes = random.randint(1, 3)
+
+        for n in range(n_holes):
+            y = np.random.randint(h)
+            x = np.random.randint(w)
+
+            y1 = np.clip(y - length // 2, 0, h)
+            y2 = np.clip(y + length // 2, 0, h)
+            x1 = np.clip(x - length // 2, 0, w)
+            x2 = np.clip(x + length // 2, 0, w)
+
+            mask[y1: y2, x1: x2] = 0.
+
+        mask = torch.from_numpy(mask)
+        mask = mask.expand_as(tensor)
+        tensor = tensor * mask
+
+        return tensor

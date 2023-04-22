@@ -44,3 +44,7 @@ model_checkpoint_callback_acc:
   dirpath: experiments/accuracy/${model.model_name}
 
 path_last: experiments/last/${model.model_name}
+
+experiment:
+  pretrain: True
+  checkpoint_file: experiments/depth_rocketnet/2023-04-13/15-15-14/experiments/accuracy/depth_rocketnet/epoch=16-step=10710.ckpt

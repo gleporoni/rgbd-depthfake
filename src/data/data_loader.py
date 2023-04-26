@@ -9,7 +9,9 @@ import torchvision.io as io
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from data.faceforensics import FaceForensics
-from random import random
+from random import random, sample, randint
+import numpy as np
+
 
 
 class FaceForensicsPlusPlus(pl.LightningDataModule):
@@ -28,6 +30,7 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
         self.transform = transforms.Compose(transform)
         self.batch_size = self.conf.data.batch_size
+
         self.augmentation0 = transforms.Compose(
             [
                 transforms.Lambda(self._compress_tensor),
@@ -36,20 +39,33 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             ]
         )
 
-        self.agumentation3 = transforms.Compose(
+        self.augmentation1 = transforms.Compose(
             [
                 transforms.Lambda(self._compress_tensor),
                 transforms.ConvertImageDtype(dtype=torch.float32),
                 transforms.GaussianBlur(kernel_size=5, sigma = (4.0, 8.0)),
                 transforms.Lambda(self._gaussian_noise),
-                transforms.Resize(size=(64, 64))
-                transforms.Resize(size=(224, 224))
-                transforms.RandomAffine(degrees = 0, translate = (20, 20)),
-                transforms.ColorJitter(brightness=(0, 0.5), contrast = (0, 0.5)),
+                transforms.Resize(size=(64, 64)),
+                transforms.Resize(size=(224, 224)),
+            ]
+        )
+
+        self.augmentation2 = transforms.Compose(
+            [
+                transforms.Lambda(self._compress_tensor),
+                transforms.ConvertImageDtype(dtype=torch.float32),
+                transforms.GaussianBlur(kernel_size=5, sigma = (4.0, 8.0)),
+                transforms.Lambda(self._gaussian_noise),
+                transforms.Resize(size=(64, 64)),
+                transforms.Resize(size=(224, 224)),
+                transforms.RandomAffine(degrees = 0, translate = (0.1, 0.1)),
+                transforms.Lambda(self._color_jitter),
                 transforms.Lambda(self._cutout)
             ]
         )
 
+        self.jitter = transforms.ColorJitter(brightness=(0, 0.5), contrast = (0, 0.5))
+        
         self.quality = 75
 
 
@@ -98,11 +114,24 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
-        epoch = self.trainer.current_epoch
         if self.conf.data.augmentation and self.trainer.training:
+            split = 0.10
+            epoch = self.trainer.current_epoch
+            if epoch < 2:
+                augmentation = self.augmentation0
+            elif epoch < 4:
+                augmentation = self.augmentation1
+                split = 0.25
+            elif epoch < 7:
+                augmentation = sample([self.augmentation1, self.augmentation2], k=1)[0]
+                split = 0.50
+            else:
+                augmentation = self.augmentation2
+                split = 0.75
+
             for i in range(batch['image'].shape[0]):
-                if random() < 0.10:
-                    batch['image'][i] = self.augmentation(batch['image'][i])
+                if random() < split:
+                    batch['image'][i] = augmentation(batch['image'][i])
         return batch
 
     # def on_after_batch_transfer(self, batch, dataloader_idx):
@@ -138,7 +167,18 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
         return compressed_tensor
     
     def _gaussian_noise(self, tensor) -> torch.Tensor:
-        return tensor + torch.normal(0, random.sample([0.05, 0.07], k=1)[0], size=tensor.shape)
+        return tensor + torch.normal(0, sample([0.05, 0.07], k=1)[0], size=tensor.shape)
+    
+    def _color_jitter(self, tensor) -> torch.Tensor:
+        if len(tensor.shape) == 3:
+            channels, height, width = tensor.shape
+        elif len(tensor.shape) == 2:
+            height, width = tensor.shape
+            channels = 1
+            tensor = tensor.unsqueeze(-1)
+        for j in range(channels):  
+            tensor[j, : , :] = self.jitter(tensor[None, j, :, :])
+        return tensor
 
     def _cutout(self, tensor) -> torch.Tensor:
         h = tensor.size(1)
@@ -146,8 +186,8 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
 
         mask = np.ones((h, w), np.float32)
 
-        length = random.sample([20, 40, 60], k=1)[0]
-        n_holes = random.randint(1, 3)
+        length = sample([20, 40, 60], k=1)[0]
+        n_holes = randint(1, 3)
 
         for n in range(n_holes):
             y = np.random.randint(h)

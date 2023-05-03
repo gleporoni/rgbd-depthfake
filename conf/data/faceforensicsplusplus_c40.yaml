@@ -9,8 +9,8 @@ hha_path: "/media/subsetSSD/Faceforensics/HHA-Faces"
 
 compression_level: ['c40'] # ['raw', 'c23', 'c40']
 real: ["youtube"]
-attacks: ["Deepfakes"]
-#attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
+attacks: ["NeuralTextures"]
+# attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
 use_attacks: True
 use_depth: False
 depth_type: 'None'

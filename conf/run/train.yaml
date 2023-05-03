@@ -47,4 +47,4 @@ path_last: experiments/last/${model.model_name}
 
 experiment:
   pretrain: False
-  checkpoint_file: weights_2/rgb_mobilenet/2023-04-10/23-13-19/experiments/accuracy/rgb_mobilenet/epoch=16-step=10829.ckpt
+  checkpoint_file: experiments/depth_double_mobilenet/2023-04-29/10-08-54/experiments/accuracy/depth_double_mobilenet/epoch=1-step=3134.ckpt

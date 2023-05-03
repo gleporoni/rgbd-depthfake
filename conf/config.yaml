@@ -7,7 +7,7 @@ hydra:
 
 defaults:
   - _self_
-  - run: train
+  - run: test
   - model: depth_mask_mobilenet
   - data: faceforensicsplusplus_c40_depth
 

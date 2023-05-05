@@ -16,7 +16,7 @@ use_depth: True
 depth_type: "depth" # 'depth' or 'hha' or 'None'
 input_type: "rgbd" # 'rgb' or 'rgbd' or 'd' 
 augmentation: False
-
+black_box_attack: True
 
 batch_size: 32
 num_workers: 8

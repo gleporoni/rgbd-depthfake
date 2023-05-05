@@ -64,6 +64,16 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             ]
         )
 
+        self.black_box_attack = transforms.Compose(
+            [
+                transforms.GaussianBlur(kernel_size=5, sigma = (4.0, 8.0)),
+                transforms.Lambda(self._gaussian_noise),
+                transforms.Resize(size=(64, 64)),
+                transforms.Resize(size=(224, 224)),
+                transforms.RandomAffine(degrees = 0, translate = (0.1, 0.1)),
+            ]
+        )
+
         self.jitter = transforms.ColorJitter(brightness=(0, 0.5), contrast = (0, 0.5))
         
         self.quality = 75
@@ -132,6 +142,9 @@ class FaceForensicsPlusPlus(pl.LightningDataModule):
             for i in range(batch['image'].shape[0]):
                 if random() < split:
                     batch['image'][i] = augmentation(batch['image'][i])
+        elif self.conf.data.black_box_attack:
+            for i in range(batch['image'].shape[0]):
+                batch['image'][i] = self.black_box_attack(batch['image'][i])
         return batch
 
     # def on_after_batch_transfer(self, batch, dataloader_idx):

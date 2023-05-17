@@ -40,7 +40,7 @@ while not exit:
 
         lockfile = open("shared_file_train.lock", 'w')
         fcntl.flock(lockfile, fcntl.LOCK_EX)
-        with open("test_to_do.txt", 'r+') as fp:
+        with open("train_to_do.txt", 'r+') as fp:
             lines = fp.read().splitlines()
             fp.seek(0)
 

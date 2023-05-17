@@ -1,0 +1,7 @@
+
+depth_double_mobilenet rgbd Deepfakes  Face2Face  FaceSwap  NeuralTextures 0.948163628578186 val
+depth_double_mobilenet rgbd Deepfakes  Face2Face  FaceSwap  NeuralTextures 0.9431519508361816 loss
+depth_double_mobilenet rgbd Deepfakes  Face2Face  FaceSwap  NeuralTextures 0.9461848735809326 last
+depth_double_xception rgbd Deepfakes  Face2Face  FaceSwap  NeuralTextures 0.9619964957237244 val
+depth_double_xception rgbd Deepfakes  Face2Face  FaceSwap  NeuralTextures 0.953914999961853 loss
+depth_double_xception rgbd Deepfakes  Face2Face  FaceSwap  NeuralTextures 0.964178740978241 last

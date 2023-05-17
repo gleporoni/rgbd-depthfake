@@ -27,7 +27,8 @@ done
 
 if docker image inspect ${docker_image} > /dev/null;
   then
-    docker run -v"$(pwd):/workdir" -v"/home/alcor/leporoni/":"/media" --gpus device=$gpu --shm-size=$shm_size -it $docker_image
+    # docker run -v"$(pwd):/workdir" -v"/home/alcor/leporoni/":"/media" --gpus device=$gpu --shm-size=$shm_size -it $docker_image
+    docker run -v"$(pwd):/workdir" -v"/media/alcor/DATA2/leporoni/":"/media" --gpus device=$gpu --shm-size=$shm_size -it $docker_image
 else
   if [ "$docker_image" = "lucamaiano/depthfake:latest" ];
     then
@@ -37,5 +38,6 @@ else
     echo "Building $docker_image..."
     docker build --build-arg WANDB_API_KEY=$wandb_api_key -t $docker_image .  
   fi
-  docker run -v"$(pwd):/workdir" -v"/home/alcor/leporoni/":"/media" --gpus device=$gpu --shm-size=$shm_size -it $docker_image
+  # docker run -v"$(pwd):/workdir" -v"/home/alcor/leporoni/":"/media" --gpus device=$gpu --shm-size=$shm_size -it $docker_image
+  docker run -v"$(pwd):/workdir" -v"/media/alcor/DATA2/leporoni/":"/media" --gpus device=$gpu --shm-size=$shm_size -it $docker_image
 fi

@@ -1,11 +1,11 @@
 dataset_name: "faceforensics"
 
-# rgb_path: "subset/Faceforensics/RGB-Faces"
-# depth_path: "subset/Faceforensics/Depth-Faces"
+rgb_path: "dataset/Faceforensics/RGB-Faces"
+depth_path: "dataset/Faceforensics/Depth-Faces"
 
-rgb_path: "/media/subsetSSD/Faceforensics/RGB-Faces"
-depth_path: "/media/subsetSSD/Faceforensics/Depth-Faces"
-hha_path: "/media/subsetSSD/Faceforensics/HHA-Faces"
+# rgb_path: "/media/subsetSSD/Faceforensics/RGB-Faces"
+# depth_path: "/media/subsetSSD/Faceforensics/Depth-Faces"
+# hha_path: "/media/subsetSSD/Faceforensics/HHA-Faces"
 
 compression_level: ['raw'] # ['raw', 'c23', 'c40']
 real: ["youtube"]
@@ -16,7 +16,7 @@ use_depth: False
 depth_type: 'None'
 input_type: 'rgb' # rgb - rgbd - d 
 augmentation: False
-black_box_attack: True
+black_box_attack: False
 
 
 batch_size: 32

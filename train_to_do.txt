@@ -1,0 +1,2 @@
+model=rgb_xception data=faceforensicsplusplus_c40 data.attacks=['Face2Face']
+model=depth_xception data=faceforensicsplusplus_c40_depth data.input_type="d" data.attacks=['Face2Face']

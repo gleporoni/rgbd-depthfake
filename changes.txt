@@ -1,4 +1,0 @@
-In train.py datetime.now() dava problemi per la creazione della cartella in quanto conteneva 'hh:mm:ss' e non è 
-ammesso in sistemi linux, quindi cambiato in datetime.now().strftime("%d-%m-%Y %H-%M-%S.%f") cosi diventa 'hh-mm-ss'
-
-abbassato batch size a 64 (80% memoria gpu consumata), originale a 192 andava out of memory

@@ -64,6 +64,8 @@ def test(conf: omegaconf.DictConfig) -> None:
     else:
         raise NotImplementedError
 
+    test_type = ['val', 'loss', 'last']
+
     # trainer
     trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
     if conf.run.experiment.check_all:
@@ -71,6 +73,7 @@ def test(conf: omegaconf.DictConfig) -> None:
                     conf.run.experiment.checkpoint_file_loss,
                     conf.run.experiment.checkpoint_file_last
                     ]
+        i = 0
         for check in check_list:
             base_path = Path(Path(__file__).parent, "../")
             checkpoint_path = Path(
@@ -90,7 +93,11 @@ def test(conf: omegaconf.DictConfig) -> None:
                 model.load_state_dict(new_weights)
 
             # module test
-            trainer.test(model, datamodule=data)
+            res = trainer.test(model, datamodule=data)
+            with open("/workdir/results.txt", "a") as f:
+                f.write("\n"+conf.model.model_name + " " + conf.data.input_type + " ".join(" "+str(attacks) for attacks in conf.data.attacks) + " " + str(res[0]['test_accuracy']) +" "+test_type[i])
+            
+            i+=1
     else:
         # Load a pretrained model from a checkpoint
         base_path = Path(Path(__file__).parent, "../")

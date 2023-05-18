@@ -13,4 +13,6 @@ Instruction to run the code:
 ```
 python src/$select_a_file$.py
 ```
+
+Pretrained models available at: [weigths](https://drive.google.com/drive/folders/193iP4iZiQivgZ7WOROoHkmQ1TAu-LaH_?usp=share_link)
 # 

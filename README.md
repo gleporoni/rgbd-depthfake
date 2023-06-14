@@ -1,4 +1,4 @@
-# rgbd-depthfake
+# A Guided-Based Approach for Deepfake Detection: RGB-Depth Integration via Features Fusion
 
 Instruction to run the code:
 

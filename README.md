@@ -8,9 +8,9 @@ Deep fake technology paves the way for a new generation of super realistic artif
 ## Main Results
 ### Detection capabilities
 
-| Class | --- | RAW | --- | --- | C40 | --- |
-|-------| --------|----------|
-| DF | RGB | MDN | RGB | MDN | --- | --- |
+| Class | RAW | C40 |
+| --- | --- | --- |
+| DF | RGB | MDN
 
 ### Feature analysis
 

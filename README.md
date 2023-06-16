@@ -44,11 +44,6 @@ Accuracy results obtained on deepfake detection task for RAW and C40 dataset set
 | CMB    | RGB   | **50,31**  | 55,22      | 50,33      | 49,47      | 77,95      | | 58,73      | 66,32      | 55,75      | **50,71**  | 79,67     |    
 |        | MDN   | 50,27      | **64,64**  | **50,61**  | **50,46**  | **79,80**  | | **71,96**  | **73,22**  | **65,96**  | 49,52      | **79,80** |  
 
-<style>
-table {
-  width: 50%;
-}
-</style>
 
 ## Run code
 

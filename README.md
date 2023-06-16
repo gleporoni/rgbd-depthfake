@@ -18,7 +18,8 @@ Deep fake technology paves the way for a new generation of super realistic artif
 | **ALL** |  | **95,02** % | 94,87 %     | | 82,37 %     | **82,43** % |
 
 ### Feature analysis
-![heatmaps](https://github.com/gleporoni/rgbd-depthfake/blob/e0224b6f1fedeb277743276322425dfe477bcde4/doc/depthfake3-1.png)
+<img src="https://github.com/gleporoni/rgbd-depthfake/blob/e0224b6f1fedeb277743276322425dfe477bcde4/doc/depthfake3-1.png" width="300">
+
 ### Robustness
 
 Instruction to run the code:

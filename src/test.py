@@ -64,7 +64,7 @@ def test(conf: omegaconf.DictConfig) -> None:
     else:
         raise NotImplementedError
 
-    test_type = ['val', 'loss', 'last']
+    test_type = ['acc', 'loss', 'last']
 
     # trainer
     trainer: Trainer = hydra.utils.instantiate(conf.run.pl_trainer)
@@ -118,7 +118,10 @@ def test(conf: omegaconf.DictConfig) -> None:
             model.load_state_dict(new_weights)
 
         # module test
-        trainer.test(model, datamodule=data)
+        res = trainer.test(model, datamodule=data)
+        with open("/workdir/results.txt", "a") as f:
+            f.write("\n"+conf.model.model_name + " " + conf.data.input_type + " ".join(" "+str(attacks) for attacks in conf.data.attacks) + " " + str(res[0]['test_accuracy']))
+            
 
 
 @hydra.main(version_base="1.1", config_path="../conf", config_name="config")

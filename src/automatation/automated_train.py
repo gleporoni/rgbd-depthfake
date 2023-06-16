@@ -21,7 +21,11 @@ base = ['python', '/workdir/src/train.py', 'run.cuda_device='+"'"+str(gpu)+"'"]
 line = 1
 exit = False
 while not exit:
-    if not torch.cuda.is_available():
+
+    output = subprocess.check_output(["python", "cuda.py"])
+    cuda_is_available = output.decode('utf-8')
+
+    if not 'True' in cuda_is_available:
         lockfile = open("shared_file_process.lock", 'w')
         fcntl.flock(lockfile, fcntl.LOCK_EX)
         with open("running_process.json", 'r+') as fp:

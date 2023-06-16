@@ -9,8 +9,8 @@ depth_path: "dataset/Faceforensics/Depth-Faces"
 
 compression_level: ['raw'] # ['raw', 'c23', 'c40']
 real: ["youtube"]
-attacks: ["Deepfakes"]
-# attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
+# attacks: ["Deepfakes"]
+attacks: ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
 use_attacks: True
 use_depth: False
 depth_type: 'None'

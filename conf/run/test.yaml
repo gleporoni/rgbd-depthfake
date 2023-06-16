@@ -12,9 +12,9 @@ pl_trainer:
   
 
 experiment:
-  checkpoint_file: /media/weights_2/raw/deepfakes/depth_double_mobilenet/2023-05-06/19-37-39/experiments/accuracy/depth_double_mobilenet/epoch=24-step=15850.ckpt
+  checkpoint_file: /media/weights_2/c40/deepfakes/depth_mask_mobilenet/2023-04-11/11-02-04/experiments/accuracy/depth_mask_mobilenet/epoch=29-step=18900.ckpt
 
-  check_all: True
+  check_all: False
   checkpoint_file_acc: /media/weights_2/raw/deepfakes/depth_xception/2023-05-05/16-37-45/experiments/accuracy/depth_xception/epoch=21-step=13948.ckpt
   checkpoint_file_loss: /media/weights_2/raw/deepfakes/depth_xception/2023-05-05/16-37-45/experiments/loss/depth_xception/epoch=0-step=634.ckpt
   checkpoint_file_last: /media/weights_2/raw/deepfakes/depth_xception/2023-05-05/16-37-45/experiments/last/depth_xception

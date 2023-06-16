@@ -4,7 +4,7 @@ import fcntl
 import time
 import json
 
-base = ["docker", "exec", "-it", "a703c1aa7183", "watch", "-n", "1", "nvidia-smi"]
+# base = ["docker", "exec", "-it", "a703c1aa7183", "watch", "-n", "1", "nvidia-smi"]
 
 base_restart = ["docker", "restart"]
 base_exec = ["docker", "exec", "-t", "python", "automated.py"]

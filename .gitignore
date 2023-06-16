@@ -54,3 +54,5 @@ trash/
 weights_2/
 testfeature/
 mat_w/
+src/featureVisualizer.py
+feat_images/

@@ -282,7 +282,7 @@ class FaceForensics(Dataset):
             path
             for path in Path(self.depth_path, label, compression, source).glob(
                 "*/*.npy"
-            )
+            ) if not self._is_file_empty(path)
         ]
 
         return depths
@@ -353,6 +353,8 @@ class FaceForensics(Dataset):
             self.dataset["split"] == self.split
         ].reset_index()
 
+    def _is_file_empty(self, file_path):
+        return os.stat(file_path).st_size == 0
 
 VAL_VIDEOS = [
     "720",

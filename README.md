@@ -22,6 +22,25 @@ Deep fake technology paves the way for a new generation of super realistic artif
 
 ### Robustness
 
+| Attack | Model |    |     | RAW |    |     | |    |     | C40 |    |     |
+|--------|-------|----|-----|-----|----|-----|-|----|-----|-----|----|-----|
+|        |       | DF | F2F | FS  | NT | ALL | | DF | F2F | FS  | NT | ALL |
+| BLR    | RGB   |    |     |     |    |     | |    |     |     |    |     |
+|        | MDN   |    |     |     |    |     | |    |     |     |    |     |
+|        |       |    |     |     |    |     | |    |     |     |    |     |
+| NSE    | RGB   |    |     |     |    |     | |    |     |     |    |     |
+|        | MDN   |    |     |     |    |     | |    |     |     |    |     |
+|        |       |    |     |     |    |     | |    |     |     |    |     |
+| RSC    | RGB   |    |     |     |    |     | |    |     |     |    |     |
+|        | MDN   |    |     |     |    |     | |    |     |     |    |     |
+|        |       |    |     |     |    |     | |    |     |     |    |     |
+| TRN    | RGB   |    |     |     |    |     | |    |     |     |    |     |
+|        | MDN   |    |     |     |    |     | |    |     |     |    |     |
+|        |       |    |     |     |    |     | |    |     |     |    |     |
+| CMB    | RGB   |    |     |     |    |     | |    |     |     |    |     |
+|        | MDN   |    |     |     |    |     | |    |     |     |    |     |
+
+
 Instruction to run the code:
 
 1. Run the Docker Image.

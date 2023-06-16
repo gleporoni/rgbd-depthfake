@@ -11,6 +11,10 @@ Deep fake technology paves the way for a new generation of super realistic artif
 | Class |  | RAW   |     | | C40   |       |
 |-------|--|-------|-----|-|-------|-------|
 | DF    |  | RGB   | MDN | | RGB   | MDN   |
+| F2F   |  | RGB   | MDN | | RGB   | MDN   |
+| FS    |  | RGB   | MDN | | RGB   | MDN   |
+| NT    |  | RGB   | MDN | | RGB   | MDN   |
+| ALL   |  | RGB   | MDN | | RGB   | MDN   |
 
 ### Feature analysis
 
